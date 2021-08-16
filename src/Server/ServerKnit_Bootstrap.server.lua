@@ -3,4 +3,4 @@ local Knit = require(game:GetService("ReplicatedStorage").Knit)
 
 Knit.AddServices(script.Parent.Services)
 
-Knit.Start():Catch(error):Await()
+Knit.Start():Catch(error)
