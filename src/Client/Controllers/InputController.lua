@@ -28,20 +28,27 @@ InputController.InputFunctions = {
         ["GUI_Enter"] = "MouseEnter";
         ["GUI_Exit"] = "MouseLeave";
 
+    };
+
+    ["Mobile"] = {
+        ["GUI_Enter"] = "MouseEnter";
+        ["GUI_Exit"] = "MouseLeave";
     }
 }
 
-InputController.InputType = nil;
+InputController.InputType = "Mouse";
 InputController.UserChangedInput = Signal.new()
 
 
 function InputController:KnitInit()
 
     -- Initial Check
-    if UserInputService.GamepadEnabled then
-        self.InputType = "Controller";
+    if UserInputService.GyroscopeEnabled then
+        self.InputType = "Mobile";
     elseif UserInputService.MouseEnabled then
         self.InputType = "Mouse";
+    elseif UserInputService.GamepadEnabled then
+        self.InputType = "Controller";
     end
 
     -- Check Player Input and if it changes tell the other scripts
@@ -54,6 +61,8 @@ function InputController:KnitInit()
                 self.InputType = "Mouse";
             elseif lastInput == Enum.UserInputType.Gamepad1 then
                 self.InputType = "Controller";
+            elseif self.lastinput == Enum.UserInputType.Touch then
+                self.InputType = "Mobile";
             end
 
             if self.InputType ~= lastInputType then

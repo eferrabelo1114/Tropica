@@ -1,6 +1,7 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local HttpService = game:GetService("HttpService")
 
 local ProfileService = require(ServerScriptService.ProfileService)
 local Knit = require(ReplicatedStorage.Knit)
@@ -8,7 +9,7 @@ local Knit = require(ReplicatedStorage.Knit)
 local Players = game:GetService("Players")
 
 -- Create ProfileInterface Service:
-local ProfileInterface = Knit.CreateService {
+local ProfileInterface = Knit.CreateService{
 	Name = "ProfileInterface";
 	Client = {};
 }
@@ -16,11 +17,16 @@ local ProfileInterface = Knit.CreateService {
 -- Public Variables
 ProfileInterface.Profiles = {}
 
+
 -- Private Varirables
 
 
 local ProfileTemplate = { -- Profile Template
-    Cash = 0;
+    Nametag = {
+        ["TextColor"] = {255, 255, 255};
+        ["BorderColor"] = {0, 0, 0};
+        ["Text"] = "Name";
+    }
 }
 
 local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
@@ -30,6 +36,19 @@ local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
 
 
 -- Functions
+
+function ProfileInterface:LoadProfile(Player, Profile)
+
+    -- Load Nametag Data
+    for Attribute, Data in pairs(Profile.Data.Nametag) do
+        if typeof(Data) == "string" then
+            Player:SetAttribute("Nametag_"..Attribute, Data)
+        else
+            Player:SetAttribute("Nametag_"..Attribute, Color3.fromRGB(Data[1], Data[2], Data[3]))
+        end
+    end
+
+end
 
 function ProfileInterface:CreateProfile(player)
     local profile = ProfileStore:LoadProfileAsync("Player_" ..player.UserId)
@@ -47,11 +66,9 @@ function ProfileInterface:CreateProfile(player)
         if player:IsDescendantOf(Players) == true then
             self.Profiles[player] = profile
 
+            self.Profiles[player].Data.Nametag.Text = player.Name
             --Loaded Profile now do things
-
-
-
-
+            self:LoadProfile(player, profile)
         else
             profile:Release()
         end
@@ -62,8 +79,9 @@ function ProfileInterface:CreateProfile(player)
     end
 end
 
-function ProfileInterface:KnitInit()
-    
+
+function ProfileInterface:KnitStart()
+    game.StarterGui.MainGui.Parent = ReplicatedStorage
 
 
     -- If any players joined earlier than the script loaded
