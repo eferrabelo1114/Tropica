@@ -51,6 +51,60 @@ function ProfileInterface:LoadProfile(Player, Profile)
         end
     end
 
+    -- Character Stuff
+    function Profile:UpdateNametag(text, textcolor, bordercolor)
+        local nametagText = function()
+            if text ~= nil then return text else return Player:GetAttribute("Nametag_Text") end
+        end
+
+        local nametagTextColor = function ()
+            if textcolor then return textcolor else return Player:GetAttribute("Nametag_TextColor") end
+        end
+
+        local nametagBorderColor = function ()
+            if bordercolor then return bordercolor else return Player:GetAttribute("Nametag_BorderColor") end
+        end
+        
+        
+        if Player.Character then
+            local char = Player.Character
+            local nametag
+
+            if char.Head:FindFirstChild("Nametag") == nil then
+                local BillboardGui = Instance.new("BillboardGui")
+                BillboardGui.AlwaysOnTop = true
+                BillboardGui.LightInfluence = 0
+                BillboardGui.Size = UDim2.new(9, 0, 2, 0)
+                BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
+
+                local NametagText = Instance.new("TextLabel")
+                NametagText.BackgroundTransparency = 1
+                NametagText.Size = UDim2.new(1, 0, 1, 0)
+                NametagText.TextScaled = true
+                NametagText.TextStrokeTransparency = 0
+                NametagText.Font = Enum.Font.FredokaOne
+                NametagText.Parent = BillboardGui
+
+                BillboardGui.Parent = char.Head
+                nametag = NametagText
+            else
+                nametag = char.Head:FindFirstChild("Nametag")
+            end
+
+            nametag.Text = nametagText()
+            nametag.TextStrokeColor3 = nametagBorderColor()
+            nametag.TextColor3 = nametagTextColor()
+        end
+    end
+
+
+    if Player.Character then
+        Profile:UpdateNametag()
+    end
+
+    Player.CharacterAppearanceLoaded:connect(function()
+        Profile:UpdateNametag()
+    end)
 end
 
 function ProfileInterface:CreateProfile(player)
@@ -72,6 +126,7 @@ function ProfileInterface:CreateProfile(player)
             self.Profiles[player].Data.Nametag.Text = player.Name
             --Loaded Profile now do things
             self:LoadProfile(player, profile)
+
             ProfileInterface.Client.ProfileLoaded:Fire(player)
         else
             profile:Release()

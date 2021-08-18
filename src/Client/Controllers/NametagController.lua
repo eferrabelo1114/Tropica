@@ -28,7 +28,8 @@ local TextColorSelected = Color3.fromRGB(255, 255, 255)
 local BorderColorSelected = Color3.fromRGB(0, 0, 0)
 local PreviewtextSelected = Player.Name
 
-local CurrencyChanging = "TextColor"
+local CurrentlyChanging = "TextColor"
+
 
 -- Create NametagController:
 local NametagController = Knit.CreateController {
@@ -45,13 +46,35 @@ local function saveButtonInfo()
     end
 end
 
+function NametagController:UpdatePreview()
+    local PreviewText = NametagFrame.Preview:FindFirstChild("Text")
+    
+    PreviewText.Text = PreviewtextSelected
+    PreviewText.TextColor3 = TextColorSelected
+    PreviewText.TextStrokeColor3 = BorderColorSelected
+end
+
 function NametagController:LoadColors()
     local ColorFrame = NametagFrame.Main:FindFirstChild("Colors")
-    local PreviewText = NametagFrame.Preview:FindFirstChild("Text")
 
-    PreviewText.Text = Player:GetAttribute("Nametag_Text")
-    PreviewText.TextColor3 = Player:GetAttribute("Nametag_TextColor")
-    PreviewText.TextStrokeColor3 = Player:GetAttribute("Nametag_BorderColor")
+    self:UpdatePreview()
+
+    for _,colorButton in pairs(ColorFrame:GetChildren()) do
+        if colorButton:IsA("ImageButton") then
+            local color = Color3.fromRGB(colorButton.BackgroundColor3.R * 255, colorButton.BackgroundColor3.G * 255, colorButton.BackgroundColor3.B * 255)
+
+            janitor:Add(
+                colorButton.MouseButton1Click:connect(function()
+                    if CurrentlyChanging == "TextColor" then
+                        TextColorSelected = color
+                    elseif CurrentlyChanging == "BorderColor" then
+                        BorderColorSelected = color
+                    end
+                    self:UpdatePreview()
+                end)
+            )
+        end
+    end
 end
 
 function NametagController:LoadButtons()
@@ -81,25 +104,29 @@ function NametagController:LoadButtons()
             elseif button.Name == "TextColor" then
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
-                        print("Changing Text Color")
+                        CurrentlyChanging = "TextColor"
                     end)
                 )
             elseif button.Name == "BorderColor" then
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
-                        print("Changing Border Color")
+                        CurrentlyChanging = "BorderColor"
                     end)
                 )
             elseif button.Name == "Confirm" then
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
                         print("Change Name Tag")
-                        print(NametagFrame.Enter.Type.Text)
                     end)
                 )
             end
         end
     end
+
+    janitor:Add(NametagFrame.Enter.Type.Changed:connect(function ()
+        PreviewtextSelected = NametagFrame.Enter.Type.Text
+        self:UpdatePreview()
+    end))
 end
 
 function NametagController:ResetSidebuttons()
@@ -137,6 +164,10 @@ end
 function NametagController:Initialize()
     ClientInput = Knit.GetController("InputController")
     UIController = Knit.GetController("UIController")
+
+    PreviewtextSelected = Player:GetAttribute("Nametag_Text")
+    TextColorSelected = Player:GetAttribute("Nametag_TextColor")
+    BorderColorSelected = Player:GetAttribute("Nametag_BorderColor")
 
     -- Input Controller
     InputType = ClientInput.InputType
