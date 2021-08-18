@@ -28,23 +28,24 @@ local ProfileTemplate = { -- Profile Template
     Nametag = {
         ["TextColor"] = {255, 255, 255};
         ["BorderColor"] = {0, 0, 0};
-        ["Text"] = "Name";
+        ["Text"] = "9367bg";
     }
 }
 
 local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
-    "Tropica_Data_Version1.0",
+    "Tropica_Data_Version1.1",
     ProfileTemplate
 )
 
 
 -- Functions
-
 function ProfileInterface:LoadProfile(Player, Profile)
 
     -- Load Nametag Data
     for Attribute, Data in pairs(Profile.Data.Nametag) do
         if typeof(Data) == "string" then
+            if Data == "9367bg" then Data = Player.Name end
+
             Player:SetAttribute("Nametag_"..Attribute, Data)
         else
             Player:SetAttribute("Nametag_"..Attribute, Color3.fromRGB(Data[1], Data[2], Data[3]))
@@ -54,20 +55,37 @@ function ProfileInterface:LoadProfile(Player, Profile)
     -- Character Stuff
     function Profile:UpdateNametag(text, textcolor, bordercolor)
         local nametagText = function()
-            if text ~= nil then return text else return Player:GetAttribute("Nametag_Text") end
+            if text ~= nil then
+                Profile.Data.Nametag.Text = text
+                 return text 
+            else 
+                return Player:GetAttribute("Nametag_Text") 
+            end
         end
 
         local nametagTextColor = function ()
-            if textcolor then return textcolor else return Player:GetAttribute("Nametag_TextColor") end
+            if textcolor then 
+                Profile.Data.Nametag.TextColor = {textcolor.R * 255, textcolor.G * 255, textcolor.B * 255}
+                return textcolor 
+            else 
+                return Player:GetAttribute("Nametag_TextColor") 
+            end
         end
 
         local nametagBorderColor = function ()
-            if bordercolor then return bordercolor else return Player:GetAttribute("Nametag_BorderColor") end
+            if bordercolor then 
+                Profile.Data.Nametag.bordercolor = {bordercolor.R * 255, bordercolor.G * 255, bordercolor.B * 255}
+                return bordercolor 
+            else 
+                return Player:GetAttribute("Nametag_BorderColor") 
+            end
         end
         
         
         if Player.Character then
             local char = Player.Character
+            Player.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+
             local nametag
 
             if char.Head:FindFirstChild("Nametag") == nil then
@@ -76,6 +94,7 @@ function ProfileInterface:LoadProfile(Player, Profile)
                 BillboardGui.LightInfluence = 0
                 BillboardGui.Size = UDim2.new(9, 0, 2, 0)
                 BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
+                BillboardGui.Name = "Nametag"
 
                 local NametagText = Instance.new("TextLabel")
                 NametagText.BackgroundTransparency = 1
@@ -84,16 +103,26 @@ function ProfileInterface:LoadProfile(Player, Profile)
                 NametagText.TextStrokeTransparency = 0
                 NametagText.Font = Enum.Font.FredokaOne
                 NametagText.Parent = BillboardGui
+                NametagText.Name = "Nametag"
 
                 BillboardGui.Parent = char.Head
                 nametag = NametagText
             else
-                nametag = char.Head:FindFirstChild("Nametag")
+                nametag = char.Head:FindFirstChild("Nametag").Nametag
             end
 
             nametag.Text = nametagText()
             nametag.TextStrokeColor3 = nametagBorderColor()
             nametag.TextColor3 = nametagTextColor()
+
+            -- Set Player Attributes
+            for Attribute, Data in pairs(Profile.Data.Nametag) do
+                if typeof(Data) == "string" then
+                    Player:SetAttribute("Nametag_"..Attribute, Data)
+                else
+                    Player:SetAttribute("Nametag_"..Attribute, Color3.fromRGB(Data[1], Data[2], Data[3]))
+                end
+            end
         end
     end
 
@@ -123,7 +152,6 @@ function ProfileInterface:CreateProfile(player)
         if player:IsDescendantOf(Players) == true then
             self.Profiles[player] = profile
 
-            self.Profiles[player].Data.Nametag.Text = player.Name
             --Loaded Profile now do things
             self:LoadProfile(player, profile)
 

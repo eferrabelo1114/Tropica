@@ -11,6 +11,7 @@ local Janitor = require(Knit.Util.Janitor)
 -- Controllers
 local ClientInput;
 local UIController;
+local NametagService;
 
 local InputType;
 local InputFunctions;
@@ -117,6 +118,7 @@ function NametagController:LoadButtons()
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
                         print("Change Name Tag")
+                        NametagService:ChangeNametag(PreviewtextSelected, TextColorSelected, BorderColorSelected)
                     end)
                 )
             end
@@ -164,6 +166,7 @@ end
 function NametagController:Initialize()
     ClientInput = Knit.GetController("InputController")
     UIController = Knit.GetController("UIController")
+    NametagService = Knit.GetService("NametagService")
 
     PreviewtextSelected = Player:GetAttribute("Nametag_Text")
     TextColorSelected = Player:GetAttribute("Nametag_TextColor")
