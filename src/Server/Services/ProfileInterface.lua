@@ -1,10 +1,13 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+game.StarterGui.MainGui.Parent = ReplicatedStorage
+
 local ServerScriptService = game:GetService("ServerScriptService")
 local HttpService = game:GetService("HttpService")
 
 local ProfileService = require(ServerScriptService.ProfileService)
 local Knit = require(ReplicatedStorage.Knit)
+local RemoteSignal = require(Knit.Util.Remote.RemoteSignal)
 
 local Players = game:GetService("Players")
 
@@ -16,7 +19,7 @@ local ProfileInterface = Knit.CreateService{
 
 -- Public Variables
 ProfileInterface.Profiles = {}
-
+ProfileInterface.Client.ProfileLoaded = RemoteSignal.new()
 
 -- Private Varirables
 
@@ -69,6 +72,7 @@ function ProfileInterface:CreateProfile(player)
             self.Profiles[player].Data.Nametag.Text = player.Name
             --Loaded Profile now do things
             self:LoadProfile(player, profile)
+            ProfileInterface.Client.ProfileLoaded:Fire(player)
         else
             profile:Release()
         end
@@ -81,9 +85,6 @@ end
 
 
 function ProfileInterface:KnitStart()
-    game.StarterGui.MainGui.Parent = ReplicatedStorage
-
-
     -- If any players joined earlier than the script loaded
     for _, player in ipairs(Players:GetPlayers()) do
         coroutine.wrap(function ()

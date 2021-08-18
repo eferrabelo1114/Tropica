@@ -91,8 +91,9 @@ function UIController:EnableSidebuttons()
                 -- Click handling
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
-                        if self.UI_Open and self.UI_Open ~= button.Name then
+                        if self.UI_Open then
                             frameControllers[self.UI_Open]:Close()
+                            self.UI_Open = nil
                         end
 
                         if frameControllers[button.Name] then
@@ -166,7 +167,7 @@ function UIController:ResetHotbar()
     end
 end
 
-function UIController:KnitStart()
+function UIController:Initialize()
     ClientInput = Knit.GetController("InputController")
     NametagController = Knit.GetController("NametagController")
 
@@ -174,6 +175,9 @@ function UIController:KnitStart()
     InputFunctions = ClientInput.InputFunctions
 
     local main = mainUI:Clone()
+
+    -- Initialize Other HUD UI
+    NametagController:Initialize()
 
     -- Load Frame Controllers
     frameControllers = {
@@ -234,6 +238,17 @@ function UIController:KnitStart()
     main.Parent = playerGui
 end
 
+
+function UIController:KnitStart()
+    local ProfileService = Knit.GetService("ProfileInterface")
+    local profileLoadedJanitor = Janitor.new()
+
+    profileLoadedJanitor:Add(ProfileService.ProfileLoaded:Connect(function()
+        self:Initialize()
+        profileLoadedJanitor:Cleanup()
+        profileLoadedJanitor = nil
+    end))
+end
 
 
 

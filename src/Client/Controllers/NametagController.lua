@@ -58,7 +58,6 @@ function NametagController:LoadButtons()
     local NametagChildren = NametagFrame["Self"]:GetDescendants()
 
     for _, button in pairs(NametagChildren) do
-        print(button)
         if button:GetAttribute("Interaction_Type") and button:IsA("ImageButton") then
 
             janitor:Add(
@@ -127,25 +126,29 @@ function NametagController:Open(MainUI)
     saveButtonInfo()
 
     self:LoadColors()
+
+    self:ResetSidebuttons()
     self:LoadButtons()
 
     
     NametagFrame["Self"].Visible = true
 end
 
-function NametagController:LoadUI()
+function NametagController:Initialize()
     ClientInput = Knit.GetController("InputController")
     UIController = Knit.GetController("UIController")
 
     -- Input Controller
-    InputType  = ClientInput.InputType
+    InputType = ClientInput.InputType
     InputFunctions = ClientInput.InputFunctions
 
     ClientInput.UserChangedInput:Connect(function()
         janitor:Cleanup()
 
-        self:ResetSidebuttons()
-        self:LoadButtons()
+        if NametagFrame ~= nil then
+            self:ResetSidebuttons()
+            self:LoadButtons()
+        end
 
         InputType = ClientInput.InputType
     end)
