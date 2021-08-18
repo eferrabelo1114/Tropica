@@ -167,6 +167,16 @@ function UIController:ResetHotbar()
     end
 end
 
+-- Clock UI
+function UIController:StartTime()
+    local Clock = self.UI_Table.HUD.Time
+    local ClockOBJ = ReplicatedStorage:FindFirstChild("Server_Time")
+
+    ClockOBJ:GetAttributeChangedSignal("Time"):Connect(function()
+        Clock.Amount.Text = ClockOBJ:GetAttribute("Time")
+    end)
+end
+
 function UIController:Initialize()
     ClientInput = Knit.GetController("InputController")
     NametagController = Knit.GetController("NametagController")
@@ -232,6 +242,7 @@ function UIController:Initialize()
     end)
 
     -- Enable Elements
+    self:StartTime()
     self:EnableHotbar()
     self:EnableSidebuttons()
 

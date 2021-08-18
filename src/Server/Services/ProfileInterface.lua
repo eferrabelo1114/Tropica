@@ -74,7 +74,7 @@ function ProfileInterface:LoadProfile(Player, Profile)
 
         local nametagBorderColor = function ()
             if bordercolor then 
-                Profile.Data.Nametag.bordercolor = {bordercolor.R * 255, bordercolor.G * 255, bordercolor.B * 255}
+                Profile.Data.Nametag.BorderColor = {bordercolor.R * 255, bordercolor.G * 255, bordercolor.B * 255}
                 return bordercolor 
             else 
                 return Player:GetAttribute("Nametag_BorderColor") 
