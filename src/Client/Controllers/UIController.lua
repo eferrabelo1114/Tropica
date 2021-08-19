@@ -10,6 +10,7 @@ local Janitor = require(Knit.Util.Janitor)
 -- Controllers
 local ClientInput;
 local NametagController;
+local CharacterCustomizeController;
 
 local InputType;
 local InputFunctions;
@@ -67,6 +68,8 @@ local function getUiFrame(requestedFrame)
 end
 
 -- Load Right Side Buttons
+local sidebuttonsToggled = false
+
 function UIController:EnableSidebuttons()
     local sideButtons = self.UI_Table.HUD.Buttons
 
@@ -120,7 +123,23 @@ function UIController:ResetSidebuttons()
     end
 end
 
+function UIController:ToggleShowSidebuttons(toggle)
+    local hotbar = self.UI_Table.HUD.Buttons
+
+    print(toggle, sidebuttonsToggled)
+
+    if toggle and not sidebuttonsToggled then
+        Tween(hotbar["Self"], {"Position"}, {UDim2.new(1.2, 0, 0.5, 0)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    elseif not toggle and sidebuttonsToggled then
+        Tween(hotbar["Self"], {"Position"}, {UDim2.new(0.991, 0, 0.5, 0)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    end
+
+    sidebuttonsToggled = toggle
+end
+
 -- Hotbar Buttons
+local hotbarToggled = false
+
 function UIController:EnableHotbar()
     local hotbar = self.UI_Table.HUD.Hotbar
 
@@ -133,7 +152,9 @@ function UIController:EnableHotbar()
                 -- Hover
                 janitor:Add(
                     button[InputFunctions[InputType]["GUI_Enter"]]:connect(function ()
-                        Tween(button, {"Size"}, {UDim2.new(button.Size.X.Scale, button.Size.X.Offset, button.Size.Y.Scale + 0.2, button.Size.Y.Offset)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+                        if not hotbarToggled then
+                            Tween(button, {"Size"}, {UDim2.new(button.Size.X.Scale, button.Size.X.Offset, button.Size.Y.Scale + 0.2, button.Size.Y.Offset)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+                        end
                     end)
                 )
                 
@@ -167,6 +188,21 @@ function UIController:ResetHotbar()
     end
 end
 
+
+function UIController:ToggleShowHotbar(toggle)
+    local hotbar = self.UI_Table.HUD.Hotbar
+
+    print(toggle, hotbarToggled)
+
+    if toggle and not hotbarToggled then
+        Tween(hotbar["Self"], {"Position"}, {UDim2.new(0.5, 0, 1.3, 0)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    elseif not toggle and hotbarToggled then
+        Tween(hotbar["Self"], {"Position"}, {UDim2.new(0.5, 0, 0.97, 0)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    end
+
+    hotbarToggled = toggle
+end
+
 -- Clock UI
 function UIController:StartTime()
     local Clock = self.UI_Table.HUD.Time
@@ -180,6 +216,7 @@ end
 function UIController:Initialize()
     ClientInput = Knit.GetController("InputController")
     NametagController = Knit.GetController("NametagController")
+    CharacterCustomizeController = Knit.GetController("CharCustomization")
 
     InputType  = ClientInput.InputType
     InputFunctions = ClientInput.InputFunctions
@@ -188,10 +225,12 @@ function UIController:Initialize()
 
     -- Initialize Other HUD UI
     NametagController:Initialize()
+    CharacterCustomizeController:Initialize()
 
     -- Load Frame Controllers
     frameControllers = {
         ["Nametag"] = NametagController;
+        ["Customization"] = CharacterCustomizeController;
     }
 
     -- Turn off all pages

@@ -78,11 +78,30 @@ function NametagController:LoadColors()
     end
 end
 
+function NametagController:UpdateButtons(previousChanging, newSelected)
+    local NametagChildren = NametagFrame["Self"]:GetDescendants()
+
+    CurrentlyChanging = newSelected
+    for _, button in pairs(NametagChildren) do
+        if button:GetAttribute("Interaction_Type") and button:IsA("ImageButton") then
+            if button.Name == previousChanging then
+                button.ImageColor3 = Color3.fromRGB(255, 255, 255)
+            elseif button.Name == CurrentlyChanging then
+                button.ImageColor3 = Color3.fromRGB(155, 155, 155)
+            end
+        end
+    end
+
+end
+
 function NametagController:LoadButtons()
     local NametagChildren = NametagFrame["Self"]:GetDescendants()
 
     for _, button in pairs(NametagChildren) do
         if button:GetAttribute("Interaction_Type") and button:IsA("ImageButton") then
+            if button.Name == CurrentlyChanging then
+                button.ImageColor3 = Color3.fromRGB(155, 155, 155)
+            end
 
             janitor:Add(
                 button[InputFunctions[InputType]["GUI_Enter"]]:connect(function ()
@@ -105,13 +124,13 @@ function NametagController:LoadButtons()
             elseif button.Name == "TextColor" then
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
-                        CurrentlyChanging = "TextColor"
+                        self:UpdateButtons(CurrentlyChanging, "TextColor")
                     end)
                 )
             elseif button.Name == "BorderColor" then
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
-                        CurrentlyChanging = "BorderColor"
+                        self:UpdateButtons(CurrentlyChanging, "BorderColor")
                     end)
                 )
             elseif button.Name == "Confirm" then

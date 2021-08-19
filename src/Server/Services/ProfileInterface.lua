@@ -32,6 +32,10 @@ local ProfileTemplate = { -- Profile Template
     }
 }
 
+local TempDataTemplate = {
+    ["DefaultCharacterDescription"] = nil;
+}
+
 local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
     "Tropica_Data_Version1.1",
     ProfileTemplate
