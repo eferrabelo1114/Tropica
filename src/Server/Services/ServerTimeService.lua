@@ -38,7 +38,7 @@ function ServerTimeService:GetCurrentTime()
 end
 
 function ServerTimeService:StartTime()
-    local minutesAfterMidnight = 0
+    local minutesAfterMidnight = 1000
 
     local Time = Instance.new("Smoke")
     Time.Parent = ReplicatedStorage

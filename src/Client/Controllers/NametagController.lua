@@ -92,7 +92,6 @@ function NametagController:UpdateButtons(previousChanging, newSelected)
             end
         end
     end
-
 end
 
 function NametagController:LoadButtons()

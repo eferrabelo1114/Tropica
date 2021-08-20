@@ -2,10 +2,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local Knit = require(ReplicatedStorage.Knit)
 local Tween = require(Knit.Util.Tween)
 local Janitor = require(Knit.Util.Janitor)
+
+local CustomizationOptions = require(ReplicatedStorage.Modules.Customization)
 
 -- Controllers
 local ClientInput;
@@ -16,7 +19,7 @@ local InputFunctions;
 
 -- Private Variables
 local UI_Parts = ReplicatedStorage.UI_Parts
-local SquareTemplate = UI_Parts.Template:Clone()
+local SquareTemplate = UI_Parts.Template
 
 local MainUI;
 local MainCustomizationFrame;
@@ -38,19 +41,49 @@ local CharCustomization = Knit.CreateController {
 
 
 function CharCustomization:LoadItemsFrame()
+    -- Reset Current Items
+    itemsJanitor:Cleanup()
 
+    for _, button in pairs(MainCustomizationFrame.Main.Main.Scroll:GetChildren()) do
+        if button:IsA("ImageButton") then
+            button:Remove()
+        end
+    end
 
+    -- Load new items
+    if Category ~= "AvatarEditor" then
+        for _, ItemID in pairs(CustomizationOptions[Category]) do
+            local ImageButon = SquareTemplate:Clone()
+            ImageButon.Icon.Image = string.format("https://www.roblox.com/asset-thumbnail/image?assetId=%d&width=420&height=420&format=png", ItemID)
 
+            ImageButon.Parent = MainCustomizationFrame.Main.Main.Scroll
+        end
+    else
+        -- Load Avatar Editor
+    end
+
+    MainCustomizationFrame.Main.Main.Scroll.CanvasSize = UDim2.new(0, 0, 0, MainCustomizationFrame.Main.Main.Scroll.UIGridLayout.AbsoluteContentSize.Y)
 end
 
 function CharCustomization:Load()
     local Categories = MainCustomizationFrame.Categories
     local MainFrame = MainCustomizationFrame.Main
 
-    -- Enable/Handle Category changing
+    self:LoadItemsFrame()
 
+    -- Enable/Handle Category changing
     for _, button in pairs(Categories.Tabs.Main.List:GetChildren()) do
-        
+        if button:IsA("ImageButton") then
+
+            janitor:Add(
+                button.MouseButton1Click:connect(function ()
+                    if button:GetAttribute("Category") ~= Category then
+                        self:UpdateCategoryButtons(Category, button:GetAttribute("Category"))
+                        self:LoadItemsFrame()
+                    end
+                end)
+            )
+        end
     end
     
     janitor:Add(
@@ -77,6 +110,7 @@ function CharCustomization:Open()
     UIController:ToggleShowHotbar(true)
     UIController:ToggleShowSidebuttons(true)
 
+    self:UpdateCategoryButtons(nil, Category)
     self:Load()
     
     MainCustomizationFrame["Self"].Visible = true
@@ -101,6 +135,21 @@ function CharCustomization:Close()
     end)
 
     UIController.UI_Open = nil
+end
+
+function CharCustomization:UpdateCategoryButtons(previousChanging, newSelected)
+    local CategoryChildren = MainCustomizationFrame.Categories:GetDescendants()
+
+    Category = newSelected
+    for _, button in pairs(CategoryChildren) do
+        if button:GetAttribute("Interaction_Type") and button:IsA("ImageButton") then
+            if button:GetAttribute("Category") == previousChanging then
+                button.ImageColor3 = Color3.fromRGB(255, 255, 255)
+            elseif button:GetAttribute("Category") == Category then
+                button.ImageColor3 = Color3.fromRGB(155, 155, 155)
+            end
+        end
+    end
 end
 
 function CharCustomization:Initialize(UI)
