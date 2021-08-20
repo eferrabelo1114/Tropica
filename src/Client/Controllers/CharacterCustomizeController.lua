@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local AvatarService;
 
 local Knit = require(ReplicatedStorage.Knit)
 local Tween = require(Knit.Util.Tween)
@@ -31,7 +32,7 @@ local itemsJanitor = Janitor.new()
 local CategoriesOriginalPos = UDim2.new(-0.5, 0 ,0.5, 0)
 local MainOriginalPos = UDim2.new(1.5, 0 ,0.5, 0)
 
-local Category = "Shirts"
+local Category = "Shirt"
 
 -- Create UIController Controller:
 local CharCustomization = Knit.CreateController {
@@ -55,6 +56,13 @@ function CharCustomization:LoadItemsFrame()
         for _, ItemID in pairs(CustomizationOptions[Category]) do
             local ImageButon = SquareTemplate:Clone()
             ImageButon.Icon.Image = string.format("https://www.roblox.com/asset-thumbnail/image?assetId=%d&width=420&height=420&format=png", ItemID)
+            ImageButon:SetAttribute("AssetID", ItemID)
+
+            itemsJanitor:Add(
+                ImageButon.MouseButton1Click:connect(function ()
+                    AvatarService:RequestChangeAsset(Category, ItemID)
+                end)
+            )
 
             ImageButon.Parent = MainCustomizationFrame.Main.Main.Scroll
         end
@@ -155,6 +163,9 @@ end
 function CharCustomization:Initialize(UI)
     ClientInput = Knit.GetController("InputController")
     UIController = Knit.GetController("UIController")
+
+    AvatarService = Knit.GetService("AvatarService")
+
 
     MainUI = UI
     MainCustomizationFrame = MainUI.Pages.CharacterCustomization

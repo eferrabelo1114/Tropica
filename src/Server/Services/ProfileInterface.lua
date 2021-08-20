@@ -1,6 +1,5 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-game.StarterGui.MainGui.Parent = ReplicatedStorage
 
 local ServerScriptService = game:GetService("ServerScriptService")
 local HttpService = game:GetService("HttpService")
@@ -11,6 +10,8 @@ local RemoteSignal = require(Knit.Util.Remote.RemoteSignal)
 
 local Players = game:GetService("Players")
 
+local AvatarService = Knit.GetService("AvatarService")
+
 -- Create ProfileInterface Service:
 local ProfileInterface = Knit.CreateService{
 	Name = "ProfileInterface";
@@ -20,6 +21,10 @@ local ProfileInterface = Knit.CreateService{
 -- Public Variables
 ProfileInterface.Profiles = {}
 ProfileInterface.Client.ProfileLoaded = RemoteSignal.new()
+
+-- Settings
+game.StarterGui.MainGui.Parent = ReplicatedStorage
+game:GetService("Players").CharacterAutoLoads = false
 
 -- Private Varirables
 
@@ -43,6 +48,8 @@ local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
 
 
 -- Functions
+
+
 function ProfileInterface:LoadProfile(Player, Profile)
 
     -- Load Nametag Data
@@ -129,6 +136,9 @@ function ProfileInterface:LoadProfile(Player, Profile)
             end
         end
     end
+
+    -- Loading Character
+    
 
 
     if Player.Character then

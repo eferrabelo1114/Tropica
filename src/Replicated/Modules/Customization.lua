@@ -1,5 +1,5 @@
 local Options = {
-    ["Shirts"] = {
+    ["Shirt"] = {
         4712423040;
         4850569078;
         4850559194;
@@ -15,7 +15,7 @@ local Options = {
         430064194;
     };
 
-    ["Accessories"] = {
+    ["Accessory"] = {
         6309495389;
     }
 
