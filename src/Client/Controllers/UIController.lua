@@ -100,7 +100,7 @@ function UIController:EnableSidebuttons()
                         end
 
                         if frameControllers[button.Name] then
-                            frameControllers[button.Name]:Open(self.UI_Table)
+                            frameControllers[button.Name]:Open()
                             self.UI_Open = button.Name
                         end
                     end)
@@ -125,8 +125,6 @@ end
 
 function UIController:ToggleShowSidebuttons(toggle)
     local hotbar = self.UI_Table.HUD.Buttons
-
-    print(toggle, sidebuttonsToggled)
 
     if toggle and not sidebuttonsToggled then
         Tween(hotbar["Self"], {"Position"}, {UDim2.new(1.2, 0, 0.5, 0)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
@@ -192,8 +190,6 @@ end
 function UIController:ToggleShowHotbar(toggle)
     local hotbar = self.UI_Table.HUD.Hotbar
 
-    print(toggle, hotbarToggled)
-
     if toggle and not hotbarToggled then
         Tween(hotbar["Self"], {"Position"}, {UDim2.new(0.5, 0, 1.3, 0)}, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
     elseif not toggle and hotbarToggled then
@@ -222,10 +218,6 @@ function UIController:Initialize()
     InputFunctions = ClientInput.InputFunctions
 
     local main = mainUI:Clone()
-
-    -- Initialize Other HUD UI
-    NametagController:Initialize()
-    CharacterCustomizeController:Initialize()
 
     -- Load Frame Controllers
     frameControllers = {
@@ -260,6 +252,10 @@ function UIController:Initialize()
             end
         end
     end
+
+    -- Initialize all UI elements with new UI table
+    NametagController:Initialize(self.UI_Table)
+    CharacterCustomizeController:Initialize(self.UI_Table)
 
     -- Save Element Data
     saveButtonInformation("Hotbar", "Size")

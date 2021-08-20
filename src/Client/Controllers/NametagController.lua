@@ -23,6 +23,7 @@ local janitor = Janitor.new()
 
 local savedButtonInfo = {}
 
+local MainUI;
 local NametagFrame;
 
 local TextColorSelected = Color3.fromRGB(255, 255, 255)
@@ -169,8 +170,7 @@ function NametagController:Close()
 end
 
 
-function NametagController:Open(MainUI)
-    NametagFrame = MainUI.Pages.Customization
+function NametagController:Open()
     saveButtonInfo()
 
     self:LoadColors()
@@ -182,7 +182,7 @@ function NametagController:Open(MainUI)
     NametagFrame["Self"].Visible = true
 end
 
-function NametagController:Initialize()
+function NametagController:Initialize(UI)
     ClientInput = Knit.GetController("InputController")
     UIController = Knit.GetController("UIController")
     NametagService = Knit.GetService("NametagService")
@@ -190,6 +190,9 @@ function NametagController:Initialize()
     PreviewtextSelected = Player:GetAttribute("Nametag_Text")
     TextColorSelected = Player:GetAttribute("Nametag_TextColor")
     BorderColorSelected = Player:GetAttribute("Nametag_BorderColor")
+
+    MainUI = UI
+    NametagFrame = MainUI.Pages.Customization
 
     -- Input Controller
     InputType = ClientInput.InputType
