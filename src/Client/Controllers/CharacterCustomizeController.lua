@@ -42,18 +42,16 @@ local Category = "Shirt"
 local CharCustomization = Knit.CreateController {
 	Name = "CharCustomization";
 }
-
-
-local bodyGyro
+local CameraOriginalCFrame;
 function CharCustomization:ModifyCharacter()
     controls:Disable()
 
     local Camera = workspace.CurrentCamera
+    Camera.CameraType = Enum.CameraType.Scriptable
+
     local Player = game:GetService("Players").LocalPlayer
     local Mouse = Player:GetMouse()
     local RunService = game:GetService("RunService")
-
-    wait(1.5)
 
     local player = game.Players.LocalPlayer
     local character = player.Character
@@ -64,14 +62,14 @@ function CharCustomization:ModifyCharacter()
     bodyGyro.D = 40
     bodyGyro.P = 10000
     bodyGyro.MaxTorque = Vector3.new(4000000, 4000000, 4000000)
+    bodyGyro.CFrame = primary.CFrame
+
 
     janitor:Add(bodyGyro)
 
     local function rayPlane(planepoint, planenormal, origin, direction)
         return -((origin-planepoint):Dot(planenormal))/(direction:Dot(planenormal))
     end
-
-
 
     janitor:Add(UserInputService.InputBegan:Connect(function(input)
         local inputType = input.UserInputType
@@ -101,6 +99,8 @@ function CharCustomization:ModifyCharacter()
             cameraJanitor:Cleanup()
          end
      end))
+
+     Tween(Camera, {"CFrame"}, {CFrame.new((Player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -6)).Position, Player.Character.HumanoidRootPart.Position)  })
 end
 
 function CharCustomization:LoadItemsFrame()
@@ -180,6 +180,9 @@ function CharCustomization:Open()
     UIController:ToggleShowHotbar(true)
     UIController:ToggleShowSidebuttons(true)
 
+    local Camera = workspace.CurrentCamera
+    CameraOriginalCFrame = Camera.CFrame
+
     self:UpdateCategoryButtons(nil, Category)
     self:Load()
     self:ModifyCharacter()
@@ -194,6 +197,11 @@ function CharCustomization:Close()
     janitor:Cleanup()
     itemsJanitor:Cleanup()
     cameraJanitor:Cleanup()
+
+    local Camera = workspace.CurrentCamera
+    Camera.CameraType = Enum.CameraType.Custom
+
+    Tween(Camera, {"CFrame"}, {CameraOriginalCFrame})
 
     UIController:ToggleShowHotbar(false)
     UIController:ToggleShowSidebuttons(false)
