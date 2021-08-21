@@ -309,7 +309,6 @@ function UIController:KnitStart()
     profileLoadedJanitor:Add(ProfileService.ProfileLoaded:Connect(function()
         while CanLoad == false do
             wait()
-            print("Waiting for player to load...")
         end
 
         self:Initialize()

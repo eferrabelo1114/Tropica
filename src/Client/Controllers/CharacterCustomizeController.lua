@@ -18,16 +18,20 @@ local UIController;
 local InputType;
 local InputFunctions;
 
+local controls = require(game:GetService("Players").LocalPlayer.PlayerScripts.PlayerModule):GetControls()
+
 -- Private Variables
 local UI_Parts = ReplicatedStorage.UI_Parts
 local SquareTemplate = UI_Parts.Template
+local Player = game.Players.LocalPlayer
+local PlayerGui = Player.PlayerGui
 
 local MainUI;
 local MainCustomizationFrame;
 
 local janitor = Janitor.new()
-
 local itemsJanitor = Janitor.new()
+local cameraJanitor = Janitor.new()
 
 local CategoriesOriginalPos = UDim2.new(-0.5, 0 ,0.5, 0)
 local MainOriginalPos = UDim2.new(1.5, 0 ,0.5, 0)
@@ -40,6 +44,64 @@ local CharCustomization = Knit.CreateController {
 }
 
 
+local bodyGyro
+function CharCustomization:ModifyCharacter()
+    controls:Disable()
+
+    local Camera = workspace.CurrentCamera
+    local Player = game:GetService("Players").LocalPlayer
+    local Mouse = Player:GetMouse()
+    local RunService = game:GetService("RunService")
+
+    wait(1.5)
+
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local primary = character.PrimaryPart
+
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.Parent = primary
+    bodyGyro.D = 40
+    bodyGyro.P = 10000
+    bodyGyro.MaxTorque = Vector3.new(4000000, 4000000, 4000000)
+
+    janitor:Add(bodyGyro)
+
+    local function rayPlane(planepoint, planenormal, origin, direction)
+        return -((origin-planepoint):Dot(planenormal))/(direction:Dot(planenormal))
+    end
+
+
+
+    janitor:Add(UserInputService.InputBegan:Connect(function(input)
+        local inputType = input.UserInputType
+        if inputType == Enum.UserInputType.MouseButton1 then
+            cameraJanitor:Add(RunService.Stepped:Connect(function ()
+                local ray = Camera:ScreenPointToRay(Mouse.X, Mouse.Y)
+                local UI = PlayerGui:GetGuiObjectsAtPosition(Mouse.X, Mouse.Y)
+
+                if UI then
+                    if table.find(UI, MainUI.Pages.CharacterCustomization.MoveAvatar) then
+
+                        local t = rayPlane(Player.Character.Head.Position, Vector3.new(0, 1, 0), ray.Origin, ray.Direction)
+                        
+                        local primaryPos = primary.Position
+                            
+                        local plane_intersection_point = (ray.Direction * t) + ray.Origin
+                        bodyGyro.CFrame = CFrame.new(primaryPos, Vector3.new(plane_intersection_point.X, primaryPos.Y, plane_intersection_point.Z))
+                    end
+                end
+            end))
+         end
+     end))
+     
+     janitor:Add(UserInputService.InputEnded:Connect(function(input)
+         local inputType = input.UserInputType
+         if inputType == Enum.UserInputType.MouseButton1 then
+            cameraJanitor:Cleanup()
+         end
+     end))
+end
 
 function CharCustomization:LoadItemsFrame()
     -- Reset Current Items
@@ -120,7 +182,8 @@ function CharCustomization:Open()
 
     self:UpdateCategoryButtons(nil, Category)
     self:Load()
-    
+    self:ModifyCharacter()
+
     MainCustomizationFrame["Self"].Visible = true
 
     Tween(MainCustomizationFrame.Categories, {"Position"}, {UDim2.new(-0.15, 0, 0.5, 0)}, 0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
@@ -130,6 +193,7 @@ end
 function CharCustomization:Close()
     janitor:Cleanup()
     itemsJanitor:Cleanup()
+    cameraJanitor:Cleanup()
 
     UIController:ToggleShowHotbar(false)
     UIController:ToggleShowSidebuttons(false)
@@ -142,6 +206,7 @@ function CharCustomization:Close()
         MainCustomizationFrame["Self"].Visible = false
     end)
 
+    controls:Enable()
     UIController.UI_Open = nil
 end
 
