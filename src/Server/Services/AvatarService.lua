@@ -6,7 +6,7 @@ local InsertService = game:GetService("InsertService")
 -- Private Variables
 local Knit = require(ReplicatedStorage.Knit)
 
-local ProfileInterface = Knit.GetService("ProfileInterface")
+local ProfileInterface
 
 local AssetsFolder
 
@@ -60,13 +60,17 @@ function AvatarService:LoadAssets()
     AssetsFolder.Parent = ReplicatedStorage
 end
 
-function AvatarService:RetrieveAsset(AssetType, AssetID)
-    if AssetsFolder:FindFirstChild(AssetType) then
-        local TypeFolder = AssetsFolder:FindFirstChild(AssetType)
+function AvatarService:RetrieveAsset(Type, AssetID)
+    local AssetType = Type
+
+    if AssetType == "Hair" then AssetType = "Accessory" end
+
+    if AssetsFolder:FindFirstChild(Type) then
+        local TypeFolder = AssetsFolder:FindFirstChild(Type)
 
         for _, Asset in pairs(TypeFolder:GetChildren()) do
             if Asset:GetAttribute("AssetID") == AssetID then
-                return Asset
+                return Asset:Clone()
             end
         end
 
@@ -83,9 +87,13 @@ local function loadColorFromTable(t)
 	return Color3.new(t.r, t.g, t.b)
 end
 
-function AvatarService:TurnTableIntoDescription(description)
+function AvatarService:TurnDescriptionIntoTable(description)
     local descTable = {}
 
+    descTable["Accessories"] = {
+        ["Hair"] = description.HairAccessory;
+    }
+    
     descTable["Scale"] = {
         ["BodyType"] = description.BodyTypeScale;
         ["Depth"] = description.DepthScale;
@@ -111,6 +119,7 @@ function AvatarService:TurnTableIntoDescription(description)
         ["S"] = description.Shirt;
     }
 
+    print(description)
     descTable["BodyColors"] = {
         ["H"] = getSaveableColor3(description.HeadColor);
         ["LA"] = getSaveableColor3(description.LeftArmColor);
@@ -126,14 +135,7 @@ end
 function AvatarService:CreateDescriptionFromTable(descriptionTable)
 	local description = Instance.new("HumanoidDescription")
 
-	description.BackAccessory = nil
-	description.FaceAccessory = nil
-	description.FrontAccessory = nil
-	description.HairAccessory = nil
-	description.HatAccessory = nil
-	description.NeckAccessory = nil
-	description.ShouldersAccessory = nil
-	description.WaistAccessory = nil
+	description.HairAccessory = descriptionTable.Accessories.Hair
 
 	description.BodyTypeScale = descriptionTable.Scale.BodyType
 	description.DepthScale = descriptionTable.Scale.Depth
@@ -164,28 +166,42 @@ function AvatarService:CreateDescriptionFromTable(descriptionTable)
 	return description
 end
 
-function AvatarService:ApplyAccessories(Profile, Char)
+function AvatarService:GetAccessoriesFromDesc(Desc)
+    local Accessories = {}
+    local AccessoriesInDesc = Desc.Accessories
 
-    
+    for _, accessory in pairs(AccessoriesInDesc) do
+        table.insert(Accessories, accessory)
+    end
 
+    return Accessories
 end
 
+function AvatarService:EquipAccessory(char, accessoryID)
+    if char then
+        local Humanoid = char.Humanoid
+        local Asset = AvatarService:RetrieveAsset("Accessory", accessoryID)
+
+        if Asset then
+            Humanoid:AddAccessory(Asset)
+        end
+    end
+end
 
 function AvatarService.Client:RequestChangeAsset(player, AssetType, AssetID)
     if player.Character then
         local Humanoid = player.Character.Humanoid
         local Asset = AvatarService:RetrieveAsset(AssetType, AssetID)
-        
+            
         if Asset ~= nil then
-            local asset = Asset:Clone()
-
-            if AssetType == "Hair" or "Accessory" then
+            if AssetType == "Accessory" then
+                local AccessoriesWearingData = ProfileInterface.Profiles[player].Data.AccessoriesWearing
                 --Check if player is already wearing accessory
                 local AlreadyWearing, wearingAccessory = false, nil
                 for _, accessory in pairs(Humanoid:GetAccessories()) do
                     if accessory:GetAttribute("AssetID") then
                         local alreadyWearingAccessoryID = accessory:GetAttribute("AssetID")
-                        if alreadyWearingAccessoryID == asset:GetAttribute("AssetID") then
+                        if alreadyWearingAccessoryID == Asset:GetAttribute("AssetID") then
                             AlreadyWearing = true
                             wearingAccessory = accessory
                         end
@@ -194,11 +210,48 @@ function AvatarService.Client:RequestChangeAsset(player, AssetType, AssetID)
 
                 if not AlreadyWearing then
                     -- Add Accessory
-                    Humanoid:AddAccessory(asset)
+                    table.insert(AccessoriesWearingData, AssetID)
+                    Humanoid:AddAccessory(Asset)
                 else
                     -- Remove Accessory
+                    local i = table.find(AccessoriesWearingData, AssetID)
+                    table.remove(AccessoriesWearingData, i)
                     wearingAccessory:Remove()
                 end 
+            elseif AssetType == "Hair" then
+                if ProfileInterface.Profiles[player].Data.Outfit.Accessories.Hair ~= AssetID then
+                    ProfileInterface.Profiles[player].Data.Outfit.Accessories.Hair = AssetID
+
+                    local CurrentClothing = Humanoid:GetAppliedDescription()
+                    CurrentClothing.HairAccessory = ProfileInterface.Profiles[player].Data.Outfit.Accessories.Hair
+
+                    Humanoid:ApplyDescription(CurrentClothing)
+                else
+                    ProfileInterface.Profiles[player].Data.Outfit.Accessories.Hair = ""
+
+                    local CurrentClothing = Humanoid:GetAppliedDescription()
+                    CurrentClothing.HairAccessory = ProfileInterface.Profiles[player].Data.Outfit.Accessories.Hair
+
+                    Humanoid:ApplyDescription(CurrentClothing)
+                end
+            elseif AssetType == "Shirt" then
+                if ProfileInterface.Profiles[player].Data.Outfit.Clothes.S ~= AssetID then
+                    ProfileInterface.Profiles[player].Data.Outfit.Clothes.S = AssetID
+                end
+                
+                local CurrentClothing = Humanoid:GetAppliedDescription()
+                CurrentClothing.Shirt = ProfileInterface.Profiles[player].Data.Outfit.Clothes.S
+
+                Humanoid:ApplyDescription(CurrentClothing)
+            elseif AssetType == "Pants" then
+                if ProfileInterface.Profiles[player].Data.Outfit.Clothes.P ~= AssetID then
+                    ProfileInterface.Profiles[player].Data.Outfit.Clothes.P = AssetID
+                end
+                
+                local CurrentClothing = Humanoid:GetAppliedDescription()
+                CurrentClothing.Pants = ProfileInterface.Profiles[player].Data.Outfit.Clothes.P
+
+                Humanoid:ApplyDescription(CurrentClothing)
             end
         end
 
@@ -207,6 +260,8 @@ end
 
 
 function AvatarService:KnitStart()
+    ProfileInterface = Knit.GetService("ProfileInterface")
+
     self:LoadAssets()
 
     return

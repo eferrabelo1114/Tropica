@@ -2,6 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
+local ContentProvider = game:GetService("ContentProvider")
 
 local Knit = require(ReplicatedStorage.Knit)
 local Tween = require(Knit.Util.Tween)
@@ -31,6 +32,8 @@ local janitor = Janitor.new()
 UIController.UI_Open = nil
 
 local frameControllers;
+
+local CanLoad = false;
 
 UIController.UI_Table = {
     ["HUD"] = {};
@@ -284,12 +287,31 @@ function UIController:Initialize()
     main.Parent = playerGui
 end
 
+-- Loading Stuff
+function UIController:LoadGame()
+    local ClothingAssets = ReplicatedStorage:WaitForChild("Assets")
+
+    for _, AssetFolder in pairs(ClothingAssets:GetChildren()) do
+        ContentProvider:PreloadAsync(AssetFolder:GetChildren())
+    end
+
+
+    CanLoad = true
+end
 
 function UIController:KnitStart()
     local ProfileService = Knit.GetService("ProfileInterface")
     local profileLoadedJanitor = Janitor.new()
+    spawn(function ()
+        self:LoadGame()
+    end)
 
     profileLoadedJanitor:Add(ProfileService.ProfileLoaded:Connect(function()
+        while CanLoad == false do
+            wait()
+            print("Waiting for player to load...")
+        end
+
         self:Initialize()
         profileLoadedJanitor:Cleanup()
         profileLoadedJanitor = nil

@@ -10,7 +10,7 @@ local RemoteSignal = require(Knit.Util.Remote.RemoteSignal)
 
 local Players = game:GetService("Players")
 
-local AvatarService = Knit.GetService("AvatarService")
+local AvatarService;
 
 -- Create ProfileInterface Service:
 local ProfileInterface = Knit.CreateService{
@@ -34,15 +34,14 @@ local ProfileTemplate = { -- Profile Template
         ["TextColor"] = {255, 255, 255};
         ["BorderColor"] = {0, 0, 0};
         ["Text"] = "9367bg";
-    }
+    };
+    Outfit = nil;
+    AccessoriesWearing = {};
 }
 
-local TempDataTemplate = {
-    ["DefaultCharacterDescription"] = nil;
-}
 
 local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
-    "Tropica_Data_Version1.1",
+    "Tropica_Data_Version2.0",
     ProfileTemplate
 )
 
@@ -137,9 +136,38 @@ function ProfileInterface:LoadProfile(Player, Profile)
         end
     end
 
-    -- Loading Character
-    
+    -- Load Character
+    local PlayerDefaultOutfit = Players:GetHumanoidDescriptionFromUserId(Player.UserId)
+    Profile.TempData["DefaultCharacterDescription"] = PlayerDefaultOutfit
 
+    if Profile.Data.Outfit == nil then --Player has no saved outfit
+        -- Load Player default outfit
+        local DefaultDescirptionTable = AvatarService:TurnDescriptionIntoTable(PlayerDefaultOutfit)
+        Profile.Data.Outfit = DefaultDescirptionTable
+
+        print(Profile.Data.Outfit)
+
+        local AccessoriesWearing = Profile.Data.AccessoriesWearing
+        local RemovedAccessoriesOutfit = AvatarService:CreateDescriptionFromTable(DefaultDescirptionTable)
+       
+    
+        Player:LoadCharacterWithHumanoidDescription(RemovedAccessoriesOutfit)
+        local char = Player.Character
+
+        for _, AccessoryID in pairs(AccessoriesWearing) do
+            AvatarService:EquipAccessory(char, AccessoryID)
+        end
+    else
+        local OutfitSaved = AvatarService:CreateDescriptionFromTable(Profile.Data.Outfit)
+        local AccessoriesWearing = Profile.Data.AccessoriesWearing
+
+        Player:LoadCharacterWithHumanoidDescription(OutfitSaved)
+        local char = Player.Character
+
+        for _, AccessoryID in pairs(AccessoriesWearing) do
+            AvatarService:EquipAccessory(char, AccessoryID)
+        end
+    end
 
     if Player.Character then
         Profile:UpdateNametag()
@@ -165,7 +193,8 @@ function ProfileInterface:CreateProfile(player)
 
         if player:IsDescendantOf(Players) == true then
             self.Profiles[player] = profile
-
+            self.Profiles[player]["TempData"] = {}
+            
             --Loaded Profile now do things
             self:LoadProfile(player, profile)
 
@@ -182,6 +211,8 @@ end
 
 
 function ProfileInterface:KnitStart()
+    AvatarService = Knit.GetService("AvatarService")
+
     -- If any players joined earlier than the script loaded
     for _, player in ipairs(Players:GetPlayers()) do
         coroutine.wrap(function ()
