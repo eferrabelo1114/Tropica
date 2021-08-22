@@ -20,11 +20,32 @@ local Options = {
 
     ["Accessory"] = {
         6309495389;
+        6794584754;
+        66303576;
+        108829742;
+        131310899;
+        16179360;
+        232532449;
+        2544540775;
+    };
+
+    ["Skintones"] = {
+        Color3.fromRGB(234, 184, 146);
+        Color3.fromRGB(204, 142, 105);
+        Color3.fromRGB(175, 148, 131);
+        Color3.fromRGB(124, 92, 70);
+        Color3.fromRGB(90, 76, 66);
+        Color3.fromRGB(86, 66, 54);
+        Color3.fromRGB(105, 64, 40);
+    };
+
+    ["Faces"] = {
+        18151826;
+        12145366;
+        15324577;
     }
-
-    
-
 }
+
 
 
 return Options

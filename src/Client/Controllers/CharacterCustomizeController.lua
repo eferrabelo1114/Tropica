@@ -4,6 +4,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local AvatarService;
+local ProfileInterface;
 
 local Knit = require(ReplicatedStorage.Knit)
 local Tween = require(Knit.Util.Tween)
@@ -33,6 +34,8 @@ local janitor = Janitor.new()
 local itemsJanitor = Janitor.new()
 local cameraJanitor = Janitor.new()
 
+local Camera = workspace.CurrentCamera
+
 local CategoriesOriginalPos = UDim2.new(-0.5, 0 ,0.5, 0)
 local MainOriginalPos = UDim2.new(1.5, 0 ,0.5, 0)
 
@@ -42,6 +45,66 @@ local Category = "Shirt"
 local CharCustomization = Knit.CreateController {
 	Name = "CharCustomization";
 }
+
+-- Rounding Function MOVE THIS IN THE FUTURE
+local roundDecimals = function(num, places) --num is your number or value and places is number of decimal places, in your case you would need 2
+    
+    places = math.pow(10, places or 0)
+    num = num * places
+   
+    if num >= 0 then 
+        num = math.floor(num + 0.5) 
+    else 
+        num = math.ceil(num - 0.5) 
+    end
+    
+    return num / places
+    
+end
+
+
+function CharCustomization:UpdateItemButtons() --FOR THE LOVE OF GOD FIND
+    local profileData = ProfileInterface:GetProfile(Player)
+
+    for _,button in pairs (MainCustomizationFrame.Main.Main.Scroll:GetChildren()) do
+        if button:IsA("ImageButton") then
+            local AssetID = button:GetAttribute("AssetID")
+
+            if Category == "Accessory" then
+                if table.find(profileData.AccessoriesWearing, AssetID) then
+                    button.ImageColor3 = Color3.fromRGB(170, 255, 164)
+                else
+                    button.ImageColor3 = Color3.fromRGB(255,255,255)
+                end
+            elseif Category == "Shirt" then
+                if profileData.Outfit.Clothes.S == AssetID then
+                    button.ImageColor3 = Color3.fromRGB(170, 255, 164)
+                else
+                    button.ImageColor3 = Color3.fromRGB(255,255,255)
+                end
+            elseif Category == "Pants" then
+                if profileData.Outfit.Clothes.P == AssetID then
+                    button.ImageColor3 = Color3.fromRGB(170, 255, 164)
+                else
+                    button.ImageColor3 = Color3.fromRGB(255,255,255)
+                end
+            elseif Category == "Hair" then
+                if profileData.Outfit.Accessories.Hair == AssetID then
+                    button.ImageColor3 = Color3.fromRGB(170, 255, 164)
+                else
+                    button.ImageColor3 = Color3.fromRGB(255,255,255)
+                end
+            elseif Category == "Faces" then
+                if profileData.Face == AssetID then
+                    button.ImageColor3 = Color3.fromRGB(170, 255, 164)
+                else
+                    button.ImageColor3 = Color3.fromRGB(255,255,255)
+                end
+            end
+        end
+    end
+end
+
 local CameraOriginalCFrame;
 function CharCustomization:ModifyCharacter()
     controls:Disable()
@@ -60,8 +123,8 @@ function CharCustomization:ModifyCharacter()
     local bodyGyro = Instance.new("BodyGyro")
     bodyGyro.Parent = primary
     bodyGyro.D = 40
-    bodyGyro.P = 10000
-    bodyGyro.MaxTorque = Vector3.new(4000000, 4000000, 4000000)
+    bodyGyro.P = 1000000
+    bodyGyro.MaxTorque = Vector3.new(400000000, 400000000, 400000000)
     bodyGyro.CFrame = primary.CFrame
 
 
@@ -100,7 +163,7 @@ function CharCustomization:ModifyCharacter()
          end
      end))
 
-     Tween(Camera, {"CFrame"}, {CFrame.new((Player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -6)).Position, Player.Character.HumanoidRootPart.Position)  })
+     Tween(Camera, {"CFrame"}, {CFrame.new((Player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -7)).Position, Player.Character.HumanoidRootPart.Position)  })
 end
 
 function CharCustomization:LoadItemsFrame()
@@ -115,21 +178,78 @@ function CharCustomization:LoadItemsFrame()
 
     -- Load new items
     if Category ~= "AvatarEditor" then
+        if MainCustomizationFrame.Main.Main.Editor.Visible == true then 
+            MainCustomizationFrame.Main.Main.Editor.Visible = false 
+        end
+
         for _, ItemID in pairs(CustomizationOptions[Category]) do
             local ImageButon = SquareTemplate:Clone()
             ImageButon.Icon.Image = string.format("https://www.roblox.com/asset-thumbnail/image?assetId=%d&width=420&height=420&format=png", ItemID)
             ImageButon:SetAttribute("AssetID", ItemID)
 
-            itemsJanitor:Add(
-                ImageButon.MouseButton1Click:connect(function ()
-                    AvatarService:RequestChangeAsset(Category, ItemID)
-                end)
-            )
+            if Category ~= "Faces" then
+                itemsJanitor:Add(
+                    ImageButon.MouseButton1Click:connect(function()
+                        AvatarService:RequestChangeAsset(Category, ItemID)
+                        self:UpdateItemButtons()
+                    end)
+                )
+            else
+                itemsJanitor:Add(
+                    ImageButon.MouseButton1Click:connect(function()
+                        AvatarService:RequestChangeFace(ItemID)
+                        self:UpdateItemButtons()
+                    end)
+                )
+            end
 
             ImageButon.Parent = MainCustomizationFrame.Main.Main.Scroll
         end
-    else
-        -- Load Avatar Editor
+
+        self:UpdateItemButtons()
+    elseif Category == "AvatarEditor" then
+        if MainCustomizationFrame.Main.Main.Editor.Visible == false then 
+            MainCustomizationFrame.Main.Main.Editor.Visible = true 
+        end
+
+        local AvatarEditorFrame = MainCustomizationFrame.Main.Main.Editor.AvatarSize
+
+        local IncreaseSize = AvatarEditorFrame.Increase
+        local DecreaseSize = AvatarEditorFrame.Decrease
+        local SizeText = AvatarEditorFrame:FindFirstChild("Size")
+        SizeText.Text = tostring(roundDecimals((Player.Character.Humanoid.BodyHeightScale.Value), 2))
+        
+        itemsJanitor:Add(
+            IncreaseSize.MouseButton1Click:connect(function()
+                SizeText.Text = tostring(roundDecimals(AvatarService:RequestAvatarSize("Increase"), 2))
+                Tween(Camera, {"CFrame"}, {CFrame.new((Player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -7)).Position, Player.Character.HumanoidRootPart.Position)  }, 0.1)
+            end)
+        )
+
+        itemsJanitor:Add(
+            DecreaseSize.MouseButton1Click:connect(function()
+                SizeText.Text = tostring(roundDecimals(AvatarService:RequestAvatarSize("Decrease"), 2))
+                Tween(Camera, {"CFrame"}, {CFrame.new((Player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -7)).Position, Player.Character.HumanoidRootPart.Position)  }, 0.1)
+            end)
+        )
+
+        local Skin_Tone_Frame = MainCustomizationFrame.Main.Main.Editor.Colors
+        for _,skinColor in pairs(CustomizationOptions["Skintones"]) do
+            local button = Instance.new("TextButton")
+            button.Text = ""
+            button.Size = UDim2.new(0, 40, 0, 50)
+            button.BackgroundColor3 = skinColor
+            button.BorderSizePixel = 0
+            button.ZIndex = Skin_Tone_Frame.ZIndex + 1
+            button.Parent = Skin_Tone_Frame
+
+            itemsJanitor:Add(button)
+            itemsJanitor:Add(button.MouseButton1Click:connect(function()
+                AvatarService:RequestSkintoneChange(skinColor)
+            end))
+        end
+
+        MainCustomizationFrame.Main.Main.Editor.Colors.CanvasSize = UDim2.new(0, 0, 0, MainCustomizationFrame.Main.Main.Editor.Colors.UIGridLayout.AbsoluteContentSize.Y)
     end
 
     MainCustomizationFrame.Main.Main.Scroll.CanvasSize = UDim2.new(0, 0, 0, MainCustomizationFrame.Main.Main.Scroll.UIGridLayout.AbsoluteContentSize.Y)
@@ -158,20 +278,23 @@ function CharCustomization:Load()
     
     janitor:Add(
         Categories.Tabs.Main.Done.MouseButton1Click:connect(function ()
-            -- Submit Clothes
-
             self:Close()
         end)
     )
 
     janitor:Add(
         Categories.Tabs.Main.Reset.MouseButton1Click:connect(function ()
-            -- Reset Character to default
-
-            print(" Test ")
+            AvatarService:ResetToDefault()
+            self:UpdateItemButtons()
         end)
     )
 
+    janitor:Add(
+        Categories.Tabs.Main.Remove_Accesories.MouseButton1Click:connect(function ()
+            AvatarService:RemoveAccesories()
+            self:UpdateItemButtons()
+        end)
+    )
 
 end
 
@@ -189,7 +312,7 @@ function CharCustomization:Open()
 
     MainCustomizationFrame["Self"].Visible = true
 
-    Tween(MainCustomizationFrame.Categories, {"Position"}, {UDim2.new(-0.15, 0, 0.5, 0)}, 0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
+    Tween(MainCustomizationFrame.Categories, {"Position"}, {UDim2.new(-0.141, 0,0.5, 0)}, 0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
     Tween(MainCustomizationFrame.Main, {"Position"}, {UDim2.new(1.06, 0, 0.5, 0)}, 0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
 end
 
@@ -236,7 +359,7 @@ end
 function CharCustomization:Initialize(UI)
     ClientInput = Knit.GetController("InputController")
     UIController = Knit.GetController("UIController")
-
+    ProfileInterface = Knit.GetService("ProfileInterface")
     AvatarService = Knit.GetService("AvatarService")
 
 
