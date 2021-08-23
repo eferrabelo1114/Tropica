@@ -38,6 +38,10 @@ local ProfileTemplate = { -- Profile Template
     Outfit = nil;
     AccessoriesWearing = {};
     Face = 000000;
+    RoomSettings = {
+        ["Walls"] = {};
+        ["Floor"] = {};
+    }
 }
 
 
@@ -51,6 +55,10 @@ local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
 
 
 function ProfileInterface:LoadProfile(Player, Profile)
+
+    --Attributes
+    Player:SetAttribute("RoomOwned", 0)
+
     -- Load Nametag Data
     for Attribute, Data in pairs(Profile.Data.Nametag) do
         if typeof(Data) == "string" then

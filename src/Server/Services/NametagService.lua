@@ -19,8 +19,6 @@ local NametagService = Knit.CreateService{
 -- Functions
 
 
-
-
 local function getTextObject(message, fromPlayerId)
 	local textObject
 	local success, errorMessage = pcall(function()

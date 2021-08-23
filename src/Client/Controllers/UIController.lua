@@ -12,6 +12,7 @@ local Janitor = require(Knit.Util.Janitor)
 local ClientInput;
 local NametagController;
 local CharacterCustomizeController;
+local RoomController;
 
 local InputType;
 local InputFunctions;
@@ -216,6 +217,7 @@ function UIController:Initialize()
     ClientInput = Knit.GetController("InputController")
     NametagController = Knit.GetController("NametagController")
     CharacterCustomizeController = Knit.GetController("CharCustomization")
+    RoomController = Knit.GetController("RoomController")
 
     InputType  = ClientInput.InputType
     InputFunctions = ClientInput.InputFunctions
@@ -226,6 +228,7 @@ function UIController:Initialize()
     frameControllers = {
         ["Nametag"] = NametagController;
         ["Customization"] = CharacterCustomizeController;
+        ["RoomSelection"] = RoomController;
     }
 
     -- Turn off all pages
@@ -259,6 +262,7 @@ function UIController:Initialize()
     -- Initialize all UI elements with new UI table
     NametagController:Initialize(self.UI_Table)
     CharacterCustomizeController:Initialize(self.UI_Table)
+    RoomController:Initialize(self.UI_Table)
 
     -- Save Element Data
     saveButtonInformation("Hotbar", "Size")

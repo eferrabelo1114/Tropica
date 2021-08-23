@@ -172,6 +172,7 @@ end
 function NametagController:Open()
     saveButtonInfo()
 
+    
     self:LoadColors()
 
     self:ResetSidebuttons()
