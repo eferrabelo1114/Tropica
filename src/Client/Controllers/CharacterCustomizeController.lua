@@ -29,10 +29,12 @@ local PlayerGui = Player.PlayerGui
 
 local MainUI;
 local MainCustomizationFrame;
+local CameraOriginalCFrame;
 
 local janitor = Janitor.new()
 local itemsJanitor = Janitor.new()
 local cameraJanitor = Janitor.new()
+local togglePlayersJanitor = Janitor.new()
 
 local Camera = workspace.CurrentCamera
 
@@ -45,6 +47,9 @@ local Category = "Shirt"
 local CharCustomization = Knit.CreateController {
 	Name = "CharCustomization";
 }
+
+
+
 
 -- Rounding Function MOVE THIS IN THE FUTURE
 local roundDecimals = function(num, places) --num is your number or value and places is number of decimal places, in your case you would need 2
@@ -60,6 +65,69 @@ local roundDecimals = function(num, places) --num is your number or value and pl
     
     return num / places
     
+end
+
+local function makePlayerInvisible(player)
+    if player.Character then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("MeshPart") then
+                if v.Name ~= "HumanoidRootPart" then
+                    v.Transparency = 0.6
+
+                    if v.name == "Head" then
+                        v:FindFirstChild("Nametag").Enabled = false
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function makePlayerVisible(player)
+    if player.Character then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("MeshPart") then
+                if v.Name ~= "HumanoidRootPart" then
+                    v.Transparency = 0
+
+                    if v.name == "Head" then
+                        v:FindFirstChild("Nametag").Enabled = true
+                    end
+                end
+            end
+        end
+    end
+end
+
+function CharCustomization:TogglePlayers(toggle)
+    if toggle then
+        
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+                makePlayerInvisible(player)
+
+                togglePlayersJanitor:Add(
+                    player.CharacterAdded:connect(function ()
+                        makePlayerInvisible(player)
+                    end))
+            end
+        end
+
+        togglePlayersJanitor:Add(
+            game.Players.PlayerAdded:connect(function (player)
+                player.CharacterAdded:connect(function ()
+                    makePlayerInvisible(player)
+                end)
+        end))
+    else
+        togglePlayersJanitor:Cleanup()
+
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+                makePlayerVisible(player)
+            end
+        end
+    end
 end
 
 
@@ -105,7 +173,7 @@ function CharCustomization:UpdateItemButtons() --FOR THE LOVE OF GOD FIND
     end
 end
 
-local CameraOriginalCFrame;
+
 function CharCustomization:ModifyCharacter()
     controls:Disable()
 
@@ -303,6 +371,9 @@ function CharCustomization:Open()
     UIController:ToggleShowHotbar(true)
     UIController:ToggleShowSidebuttons(true)
 
+    CharCustomization:TogglePlayers(true)
+    AvatarService:AvatarEditing(true)
+
     local Camera = workspace.CurrentCamera
     CameraOriginalCFrame = Camera.CFrame
 
@@ -320,6 +391,9 @@ function CharCustomization:Close()
     janitor:Cleanup()
     itemsJanitor:Cleanup()
     cameraJanitor:Cleanup()
+
+    CharCustomization:TogglePlayers(false)
+    AvatarService:AvatarEditing(false)
 
     local Camera = workspace.CurrentCamera
     Camera.CameraType = Enum.CameraType.Custom
@@ -339,6 +413,11 @@ function CharCustomization:Close()
 
     controls:Enable()
     UIController.UI_Open = nil
+end
+
+function CharCustomization:Reset()
+
+
 end
 
 function CharCustomization:UpdateCategoryButtons(previousChanging, newSelected)
