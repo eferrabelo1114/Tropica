@@ -319,6 +319,18 @@ function UIController:KnitStart()
         profileLoadedJanitor:Cleanup()
         profileLoadedJanitor = nil
     end))
+
+    spawn(function ()
+        player.CharacterAdded:connect(function ()
+            player.Character:WaitForChild("Humanoid")
+            player.Character.Humanoid.Died:connect(function ()
+                if self.UI_Open then
+                    frameControllers[self.UI_Open]:Close()
+                    self.UI_Open = nil
+                end
+            end)
+        end)
+    end)
 end
 
 
