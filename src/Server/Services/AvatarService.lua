@@ -2,6 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 local InsertService = game:GetService("InsertService")
+local PhysicsService = game:GetService("PhysicsService")
 
 -- Private Variables
 local Knit = require(ReplicatedStorage.Knit)
@@ -208,7 +209,6 @@ function AvatarService:EquipAccessory(char, accessoryID, default)
 
         if Asset == nil and default == true then
             local AssetOBJ = InsertService:LoadAsset(accessoryID)
-            AssetOBJ.Parent = workspace
 
             Asset = AssetOBJ:FindFirstChildOfClass("Accessory"):Clone()
             Asset:SetAttribute("AssetID", accessoryID)
@@ -240,10 +240,6 @@ function AvatarService:ChangeFace(player, faceID)
     end
 end
 
-function AvatarService:RemoveAccessories(player)
-
-end
-
 function AvatarService.Client:ResetToDefault(player)
     if player.Character then
         local char = player.Character
@@ -254,14 +250,19 @@ function AvatarService.Client:ResetToDefault(player)
         local DefaultOutfit = profile.TempData.DefaultCharacterDescription
         local DefaultAccessories = profile.TempData.DefaultCharacterAccessories
         local DefaultFace = profile.TempData.DefaultFace
-        
+
         profile.Data.Outfit = AvatarService:TurnDescriptionIntoTable(DefaultOutfit)
-        profile.Data.AccessoriesWearing = DefaultAccessories
         profile.Data.Face = DefaultFace
 
-        AvatarService:ChangeFace(player, DefaultFace)
+        for _,v in pairs(DefaultAccessories) do
+            table.insert(profile.Data.AccessoriesWearing, v)
+        end
 
-        char.Humanoid:ApplyDescription(DefaultOutfit)
+        local description = AvatarService:CreateDescriptionFromTable(profile.Data.Outfit)
+
+        AvatarService:ChangeFace(player, DefaultFace)
+        char.Humanoid:ApplyDescription(description)
+
         for _, AccessoryID in pairs(DefaultAccessories) do
             AvatarService:EquipAccessory(char, AccessoryID, true)
         end
@@ -292,7 +293,9 @@ function AvatarService.Client:RemoveAccesories(player)
 
         for _, accessory in pairs(HumanoidAccesoriesWearing) do
             if accessory:GetAttribute("AssetID") then
+
                 local AssetID = accessory:GetAttribute("AssetID")
+
                 if table.find(AccessoriesWearingData, AssetID) then
                     local i = table.find(AccessoriesWearingData, AssetID)
                     accessory:Remove()
@@ -438,6 +441,26 @@ function AvatarService.Client:RequestChangeAsset(player, AssetType, AssetID)
                 CurrentClothing.Pants = ProfileInterface.Profiles[player].Data.Outfit.Clothes.P
 
                 Humanoid:ApplyDescription(CurrentClothing)
+            end
+        end
+    end
+end
+
+function AvatarService.Client:AvatarEditing(player, toggle)
+    if player.Character then
+        local char = player.Character
+
+        if toggle then
+            for _, v in pairs(player.Character:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("MeshPart") then
+                    PhysicsService:SetPartCollisionGroup(v, "AvatarEditing")
+                end
+            end
+        else
+            for _, v in pairs(player.Character:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("MeshPart") then
+                    PhysicsService:SetPartCollisionGroup(v, "Characters")
+                end
             end
         end
     end
