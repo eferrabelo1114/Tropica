@@ -1,6 +1,6 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
+local PhysicsService = game:GetService("PhysicsService")
 local ServerScriptService = game:GetService("ServerScriptService")
 local HttpService = game:GetService("HttpService")
 
@@ -38,20 +38,73 @@ local ProfileTemplate = { -- Profile Template
     Outfit = nil;
     AccessoriesWearing = {};
     Face = 000000;
-    RoomSettings = {
+    Roomsettings = {
         ["Walls"] = {};
         ["Floor"] = {};
+        ["AllowedUsers"] = {};
+        ["BannedUsers"] = {};
+        ["Locked"] = false;
     }
 }
 
 
 local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
-    "Tropica_Data_Version3.1",
+    "Tropica_Data_Version3.2",
     ProfileTemplate
 )
 
 
 -- Functions
+
+function ProfileInterface:LoadCharacter(Player, Profile)
+    if Profile.Data.Outfit == nil then --Player has no saved outfit
+        -- Load Player default outfit
+        local DefaultDescirptionTable = AvatarService:TurnDescriptionIntoTable(Profile.TempData["DefaultCharacterDescription"])
+        Profile.Data.Outfit = DefaultDescirptionTable
+ 
+        for _,v in pairs(Profile.TempData["DefaultCharacterAccessories"]) do
+            table.insert(Profile.Data.AccessoriesWearing, v)
+        end
+        
+        Profile.Data.Face = Profile.TempData["DefaultFace"]
+        
+        local AccessoriesWearing = Profile.Data.AccessoriesWearing
+        local RemovedAccessoriesOutfit = AvatarService:CreateDescriptionFromTable(DefaultDescirptionTable)
+       
+        Player:LoadCharacterWithHumanoidDescription(RemovedAccessoriesOutfit)
+        local char = Player.Character
+
+        Profile:UpdateNametag()
+        for _, AccessoryID in pairs(AccessoriesWearing) do
+            AvatarService:EquipAccessory(char, AccessoryID, true)
+        end
+    else
+        local OutfitSaved = AvatarService:CreateDescriptionFromTable(Profile.Data.Outfit)
+        local AccessoriesWearing = Profile.Data.AccessoriesWearing
+
+        Player:LoadCharacterWithHumanoidDescription(OutfitSaved)
+        local char = Player.Character
+
+        Profile:UpdateNametag()
+
+        AvatarService:ChangeFace(Player, Profile.Data.Face)
+
+        for _, AccessoryID in pairs(AccessoriesWearing) do
+            AvatarService:EquipAccessory(char, AccessoryID, true)
+        end
+    end
+
+    for _, v in pairs(Player.Character:GetDescendants()) do
+        if v:IsA("BasePart") or v:IsA("MeshPart") then
+            PhysicsService:SetPartCollisionGroup(v, "Characters")
+        end
+    end
+
+    Player.Character.Humanoid.Died:connect(function ()
+        wait(2)
+        self:LoadCharacter(Player, Profile)
+    end)
+end
 
 
 function ProfileInterface:LoadProfile(Player, Profile)
@@ -159,45 +212,8 @@ function ProfileInterface:LoadProfile(Player, Profile)
     Profile.TempData["DefaultCharacterDescription"] = PlayerDefaultOutfit
     Profile.TempData["DefaultCharacterAccessories"] = AvatarService:GetAccessoriesFromDesc(PlayerDefaultOutfit)
     Profile.TempData["DefaultFace"] = defaultFace
-    
-    if Profile.Data.Outfit == nil then --Player has no saved outfit
-
-        -- Load Player default outfit
-        local DefaultDescirptionTable = AvatarService:TurnDescriptionIntoTable(PlayerDefaultOutfit)
-        Profile.Data.Outfit = DefaultDescirptionTable
-        Profile.Data.AccessoriesWearing = Profile.TempData["DefaultCharacterAccessories"]
-        Profile.Data.Face = Profile.TempData["DefaultFace"]
         
-        local AccessoriesWearing = Profile.Data.AccessoriesWearing
-        local RemovedAccessoriesOutfit = AvatarService:CreateDescriptionFromTable(DefaultDescirptionTable)
-       
-        Player:LoadCharacterWithHumanoidDescription(RemovedAccessoriesOutfit)
-        local char = Player.Character
-
-        for _, AccessoryID in pairs(AccessoriesWearing) do
-            AvatarService:EquipAccessory(char, AccessoryID, true)
-        end
-    else
-        local OutfitSaved = AvatarService:CreateDescriptionFromTable(Profile.Data.Outfit)
-        local AccessoriesWearing = Profile.Data.AccessoriesWearing
-
-        Player:LoadCharacterWithHumanoidDescription(OutfitSaved)
-        local char = Player.Character
-
-        AvatarService:ChangeFace(Player, Profile.Data.Face)
-
-        for _, AccessoryID in pairs(AccessoriesWearing) do
-            AvatarService:EquipAccessory(char, AccessoryID, true)
-        end
-    end
-
-    if Player.Character then
-        Profile:UpdateNametag()
-    end
-
-    Player.CharacterAppearanceLoaded:connect(function()
-        Profile:UpdateNametag()
-    end)
+    self:LoadCharacter(Player, Profile)
 end
 
 function ProfileInterface.Client:GetProfile(player)
