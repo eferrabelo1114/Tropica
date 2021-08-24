@@ -51,6 +51,8 @@ function RoomService.Client:ClaimRoom(player, RoomID)
                     room.Locked = profile.Data.Roomsettings.Locked
                     room.Owner = player
 
+                    player:SetAttribute("RoomOwned", room.RoomID)
+
                     room.Self:SetAttribute("Claimed", true)
                     room.Self:SetAttribute("Owner", player.Name)
                     room.Self:SetAttribute("Locked", profile.Data.Roomsettings.Locked)
@@ -93,6 +95,7 @@ function RoomService.Client:LockRoom(player, toggle)
                 if profile.TempData.RoomOwned ~= nil then
                     local room = profile.TempData.RoomOwned
                     room.Locked = toggle
+                    room.Self:SetAttribute("Locked", toggle)
                 end
             end
         end
@@ -144,7 +147,7 @@ function RoomService:KnitStart()
             local roomOwner = room.Owner
 
             if roomOwner then
-                local success, response = pcall(function()
+                pcall(function() -- The player may leave mid call, so pcall this >_<
                     local ownerProfile = ProfileInterface.Profiles[roomOwner]
 
                     if ownerProfile then
@@ -160,7 +163,7 @@ function RoomService:KnitStart()
                                         
                                         if not table.find(ownerRoomSettings.AllowedUsers, PlayerInRoom) then
                                             
-                                            local newCFrame = CFrame.new((RoomPrimaryPart.CFrame * CFrame.new(-3, 0 ,0)).Position)
+                                            local newCFrame = CFrame.new((RoomPrimaryPart.CFrame * CFrame.new(0, 0 ,17)).Position)
                                             Char:SetPrimaryPartCFrame(newCFrame)
     
                                         end
