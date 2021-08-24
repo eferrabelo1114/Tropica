@@ -19,6 +19,7 @@ local InputFunctions;
 local MainUI;
 local ChangeRoomsPage;
 local TeleportToRoomPage;
+local CustomizeRoomPage;
 
 local janitor = Janitor.new()
 local teleportPageJanitor = Janitor.new()
@@ -34,12 +35,26 @@ local player = game.Players.LocalPlayer;
 
 local ChoseClaim;
 
+local PlayerRoom;
+
 -- Create UIController Controller:
 local RoomController = Knit.CreateController {
 	Name = "RoomController";
 }
 
 
+-- Other Functions
+function RoomController:FindRoomByID(RoomID)
+    for _, Room in pairs(game.Workspace.Rooms:GetChildren()) do
+        if Room:GetAttribute("RoomID") == RoomID then
+            return Room
+        end
+    end
+
+    return nil
+end
+
+-- Room Claiming Functions
 function RoomController:DisplayTeleportPage()
     
     local function close()
@@ -139,6 +154,8 @@ function RoomController:Enable()
             if Claimed then
                 self:DisplayTeleportPage()
                 self:Close()
+
+                PlayerRoom = RoomController:FindRoomByID(player:GetAttribute("RoomOwned"))
             else
                 ChoseClaim = false
                 print("Unable to claim room!")
@@ -147,9 +164,50 @@ function RoomController:Enable()
     )
 end
 
+-- Room Cusotmizing Functions
+function RoomController:EnableCustomizationMenu()
+    local CloseButton = CustomizeRoomPage.BG.Main.Close
+    print(CustomizeRoomPage.BG)
 
+    local LockButton = CustomizeRoomPage.BG.Main.Lock
+    
+    local RoomLocked = PlayerRoom:GetAttribute("Locked")
+
+    if RoomLocked == true then
+        LockButton.Text.Text = "Unlock Room"
+    elseif not RoomLocked then
+        LockButton.Text.Text = "Lock Room"
+    end
+
+    janitor:Add(
+        CloseButton.MouseButton1Click:connect(function ()
+            local a = Tween(CustomizeRoomPage["Self"], {"Position"}, {UDim2.new(0.5, 0, 0.8, 0)})
+            a.Completed:Wait()
+            self:Close()
+        end)
+    )
+
+    janitor:Add(
+        LockButton.MouseButton1Click:connect(function ()
+            RoomService:LockRoom(not RoomLocked)
+
+            RoomLocked = PlayerRoom:GetAttribute("Locked")
+            if RoomLocked == true then
+                LockButton.Text.Text = "Unlock Room"
+            elseif not RoomLocked then
+                LockButton.Text.Text = "Lock Room"
+            end
+        end)
+    )
+
+    CustomizeRoomPage["Self"].Position = UDim2.new(0.5, 0, 0.8, 0)
+    CustomizeRoomPage["Self"].Visible = true
+    Tween(CustomizeRoomPage["Self"], {"Position"}, {UDim2.new(0.5, 0, 0.5, 0)})
+end
+
+-- Main Functions
 function RoomController:Open()
-    if player:GetAttribute("RoomOwned") == 0 then
+    if player:GetAttribute("RoomOwned") == 0 then -- Fix This
         UIController:ToggleShowHotbar(true)
         UIController:ToggleShowSidebuttons(true)
 
@@ -158,7 +216,7 @@ function RoomController:Open()
 
         self:Enable()
     else
-        print("Already owns room. Display room UI.")
+        self:EnableCustomizationMenu()
     end
 end
 
@@ -172,6 +230,7 @@ function RoomController:Close()
 
     
     ChangeRoomsPage["Self"].Visible = false
+    CustomizeRoomPage["Self"].Visible = false
     UIController.UI_Open = nil
 end
 
@@ -201,8 +260,11 @@ function RoomController:Initialize(UI)
     MainUI = UI;
     ChangeRoomsPage = MainUI.Pages.Change_Rooms
     TeleportToRoomPage = MainUI.Pages.TeleportToRoom
+    CustomizeRoomPage = MainUI.Pages.Customize_Room
 
-
+    CustomizeRoomPage.Visible = false
+    TeleportToRoomPage.Visible = false
+    ChangeRoomsPage.Visible = false
 end
 
 
