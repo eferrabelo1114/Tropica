@@ -117,7 +117,6 @@ function RoomService:KnitStart()
         RoomService.Rooms[room].RoomID = i
         RoomService.Rooms[room].Self = room
 
-        room.PrimaryPart.Touched:connect(function()end) -- Create touch interest
 
         room:SetAttribute("Claimed", false)
         room:SetAttribute("Locked", false)
@@ -153,7 +152,7 @@ function RoomService:KnitStart()
                     if ownerProfile then
                         local ownerRoomSettings = ProfileInterface.Profiles[roomOwner].Data.Roomsettings
     
-                        for _, Part in pairs(RoomPrimaryPart:GetTouchingParts()) do
+                        for _, Part in pairs(workspace:GetPartsInPart(RoomPrimaryPart)) do
                             if game.Players:GetPlayerFromCharacter(Part.Parent) ~= nil then
                                 local PlayerInRoom = game.Players:GetPlayerFromCharacter(Part.Parent)
                                 local Char = PlayerInRoom.Character
