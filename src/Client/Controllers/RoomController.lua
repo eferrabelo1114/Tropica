@@ -167,7 +167,6 @@ end
 -- Room Cusotmizing Functions
 function RoomController:EnableCustomizationMenu()
     local CloseButton = CustomizeRoomPage.BG.Main.Close
-    print(CustomizeRoomPage.BG)
 
     local LockButton = CustomizeRoomPage.BG.Main.Lock
     
