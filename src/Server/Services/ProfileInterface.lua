@@ -41,7 +41,7 @@ local ProfileTemplate = { -- Profile Template
     Roomsettings = {
         ["Walls"] = {};
         ["Floor"] = {};
-        ["AllowedUsers"] = {};
+        ["WhitelistedUsers"] = {};
         ["BannedUsers"] = {};
         ["Locked"] = false;
     }
@@ -110,7 +110,8 @@ function ProfileInterface:LoadProfile(Player, Profile)
     --Attributes
     Player:SetAttribute("RoomOwned", 0)
     Player:SetAttribute("BannedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.BannedUsers))
-
+    Player:SetAttribute("WhitelistedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.WhitelistedUsers))
+   
     -- Load Nametag Data
     for Attribute, Data in pairs(Profile.Data.Nametag) do
         if typeof(Data) == "string" then
