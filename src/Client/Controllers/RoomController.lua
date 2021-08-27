@@ -101,7 +101,7 @@ function RoomController:OpenBanPage()
     -- Load player list menu
     for _, Player_ in pairs(game.Players:GetPlayers()) do
         if Player_ ~= player then
-            local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size60x60)
+            local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size180x180)
             local IsPlayerFriend = player:IsFriendsWith(Player_.UserId)
             
             local PlayerButton = PlayerButtonTemplate:Clone()
@@ -116,7 +116,85 @@ function RoomController:OpenBanPage()
 
     --Check if a new player joins
     playerListJanitor:Add(game.Players.PlayerAdded:connect(function(Player_)
-        local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size60x60)
+        local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size180x180)
+            local IsPlayerFriend = player:IsFriendsWith(Player_.UserId)
+            
+            local PlayerButton = PlayerButtonTemplate:Clone()
+
+            PlayerButton.Player_Icon.Image = Icon
+            PlayerButton.PlayerName.Text = Player_.Name
+            PlayerButton.Friend.Visible = IsPlayerFriend
+
+            makeButton(PlayerButton, Player_)   
+    end))
+
+    playerListJanitor:Add(PlayerListPage.Main.Close.MouseButton1Click:connect(function ()
+        PlayerListPage["Self"].Visible = false
+        playerListJanitor:Cleanup()
+    end))
+
+    
+    PlayerListPage.Main.Scroll.CanvasSize = UDim2.new(0, 0, 0, PlayerListPage.Main.Scroll.UIGridLayout.AbsoluteContentSize.Y)
+    PlayerListPage["Self"].Visible = true
+end
+
+-- Room Whitelisting Stuff
+function RoomController:OpenWhitelistPage()
+    playerListJanitor:Cleanup()
+
+    local LocalPlayerWhitelistedPlayers = HttpService:JSONDecode(player:GetAttribute("WhitelistedUsers"))
+
+    local function makeButton(PlayerButton, Player_)            
+        if table.find(LocalPlayerWhitelistedPlayers, Player_.UserId) then
+            PlayerButton.MainButton.Text.Text = "Unwhitelist Player"
+            PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(255, 47, 47)
+        else
+            PlayerButton.MainButton.Text.Text = "Whitelist Player"
+            PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(119, 243, 140)
+        end
+
+        playerListJanitor:Add(PlayerButton.MainButton.MouseButton1Click:connect(function ()
+            RoomService:WhitelistUser(Player_.UserId)
+        end))
+
+        playerListJanitor:Add(player:GetAttributeChangedSignal("WhitelistedUsers"):Connect(function()
+            local WhitelistUsers = HttpService:JSONDecode(player:GetAttribute("WhitelistedUsers"))
+        
+            if table.find(WhitelistUsers, Player_.UserId) then
+                PlayerButton.MainButton.Text.Text = "Unwhitelist Player"
+                PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(255, 47, 47)
+            else
+                PlayerButton.MainButton.Text.Text = "Whitelist Player"
+                PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(119, 243, 140)
+            end
+        end))
+
+        -- Bind Text Button
+        PlayerButton.Parent = PlayerListPage.Main.Scroll
+
+        playerListJanitor:Add(PlayerButton)
+    end
+
+
+    -- Load player list menu
+    for _, Player_ in pairs(game.Players:GetPlayers()) do
+        if Player_ ~= player then
+            local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+            local IsPlayerFriend = player:IsFriendsWith(Player_.UserId)
+            
+            local PlayerButton = PlayerButtonTemplate:Clone()
+
+            PlayerButton.Player_Icon.Image = Icon
+            PlayerButton.PlayerName.Text = Player_.Name
+            PlayerButton.Friend.Visible = IsPlayerFriend
+
+            makeButton(PlayerButton, Player_)      
+        end
+    end
+
+    --Check if a new player joins
+    playerListJanitor:Add(game.Players.PlayerAdded:connect(function(Player_)
+        local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
             local IsPlayerFriend = player:IsFriendsWith(Player_.UserId)
             
             local PlayerButton = PlayerButtonTemplate:Clone()
@@ -254,6 +332,7 @@ function RoomController:EnableCustomizationMenu()
 
     local LockButton = CustomizeRoomPage.BG.Main.Lock
     local BanPlayerButton = CustomizeRoomPage.BG.Main.Ban
+    local WhitelistPlayerButton = CustomizeRoomPage.BG.Main.Allow
 
     local RoomLocked = PlayerRoom:GetAttribute("Locked")
 
@@ -290,9 +369,16 @@ function RoomController:EnableCustomizationMenu()
         end)
     )
 
+    janitor:Add(
+        WhitelistPlayerButton.MouseButton1Click:connect(function ()
+            self:OpenWhitelistPage()
+        end)
+    )
+
+
     CustomizeRoomPage["Self"].Position = UDim2.new(0.5, 0, 0.8, 0)
     CustomizeRoomPage["Self"].Visible = true
-    Tween(CustomizeRoomPage["Self"], {"Position"}, {UDim2.new(0.5, 0, 0.5, 0)})
+    Tween(CustomizeRoomPage["Self"], {"Position"}, {UDim2.new(0.5, 0, 0.54, 0)})
 end
 
 -- Main Functions
