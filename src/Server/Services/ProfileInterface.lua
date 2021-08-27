@@ -49,13 +49,12 @@ local ProfileTemplate = { -- Profile Template
 
 
 local ProfileStore = ProfileService.GetProfileStore( --Profile Data Store
-    "Tropica_Data_Version3.2",
+    "Tropica_Data_Version4.1",
     ProfileTemplate
 )
 
 
 -- Functions
-
 function ProfileInterface:LoadCharacter(Player, Profile)
     if Profile.Data.Outfit == nil then --Player has no saved outfit
         -- Load Player default outfit
@@ -73,7 +72,7 @@ function ProfileInterface:LoadCharacter(Player, Profile)
        
         Player:LoadCharacterWithHumanoidDescription(RemovedAccessoriesOutfit)
         local char = Player.Character
-
+        
         Profile:UpdateNametag()
         for _, AccessoryID in pairs(AccessoriesWearing) do
             AvatarService:EquipAccessory(char, AccessoryID, true)
@@ -108,9 +107,9 @@ end
 
 
 function ProfileInterface:LoadProfile(Player, Profile)
-
     --Attributes
     Player:SetAttribute("RoomOwned", 0)
+    Player:SetAttribute("BannedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.BannedUsers))
 
     -- Load Nametag Data
     for Attribute, Data in pairs(Profile.Data.Nametag) do

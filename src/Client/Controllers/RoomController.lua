@@ -2,6 +2,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 local RoomService;
 
 local Knit = require(ReplicatedStorage.Knit)
@@ -16,13 +17,17 @@ local InputType;
 local InputFunctions;
 
 -- Private Variables
+local UI_Parts = ReplicatedStorage.UI_Parts
+
 local MainUI;
 local ChangeRoomsPage;
 local TeleportToRoomPage;
 local CustomizeRoomPage;
+local PlayerListPage;
 
 local janitor = Janitor.new()
 local teleportPageJanitor = Janitor.new()
+local playerListJanitor = Janitor.new()
 
 local Camera = workspace.CurrentCamera
 
@@ -33,8 +38,9 @@ local RoomLookingAt;
 
 local player = game.Players.LocalPlayer;
 
-local ChoseClaim;
+local PlayerButtonTemplate = UI_Parts.Player_Button
 
+local ChoseClaim;
 local PlayerRoom;
 
 -- Create UIController Controller:
@@ -52,6 +58,84 @@ function RoomController:FindRoomByID(RoomID)
     end
 
     return nil
+end
+
+-- Room Banning Stuff
+function RoomController:OpenBanPage()
+    playerListJanitor:Cleanup()
+
+    local LocalPlayerBannedUsers = HttpService:JSONDecode(player:GetAttribute("BannedUsers"))
+
+    local function makeButton(PlayerButton, Player_)            
+        if table.find(LocalPlayerBannedUsers, Player_.UserId) then
+            PlayerButton.MainButton.Text.Text = "Unban Player"
+            PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(255, 47, 47)
+        else
+            PlayerButton.MainButton.Text.Text = "Ban Player"
+            PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(119, 243, 140)
+        end
+
+        playerListJanitor:Add(PlayerButton.MainButton.MouseButton1Click:connect(function ()
+            RoomService:BanUser(Player_.UserId)
+        end))
+
+        playerListJanitor:Add(player:GetAttributeChangedSignal("BannedUsers"):Connect(function()
+            local BannedUsers = HttpService:JSONDecode(player:GetAttribute("BannedUsers"))
+        
+            if table.find(BannedUsers, Player_.UserId) then
+                PlayerButton.MainButton.Text.Text = "Unban Player"
+                PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(255, 47, 47)
+            else
+                PlayerButton.MainButton.Text.Text = "Ban Player"
+                PlayerButton.MainButton.ImageColor3 = Color3.fromRGB(119, 243, 140)
+            end
+        end))
+
+        -- Bind Text Button
+        PlayerButton.Parent = PlayerListPage.Main.Scroll
+
+        playerListJanitor:Add(PlayerButton)
+    end
+
+
+    -- Load player list menu
+    for _, Player_ in pairs(game.Players:GetPlayers()) do
+        if Player_ ~= player then
+            local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size60x60)
+            local IsPlayerFriend = player:IsFriendsWith(Player_.UserId)
+            
+            local PlayerButton = PlayerButtonTemplate:Clone()
+
+            PlayerButton.Player_Icon.Image = Icon
+            PlayerButton.PlayerName.Text = Player_.Name
+            PlayerButton.Friend.Visible = IsPlayerFriend
+
+            makeButton(PlayerButton, Player_)      
+        end
+    end
+
+    --Check if a new player joins
+    playerListJanitor:Add(game.Players.PlayerAdded:connect(function(Player_)
+        local Icon = game.Players:GetUserThumbnailAsync(Player_.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size60x60)
+            local IsPlayerFriend = player:IsFriendsWith(Player_.UserId)
+            
+            local PlayerButton = PlayerButtonTemplate:Clone()
+
+            PlayerButton.Player_Icon.Image = Icon
+            PlayerButton.PlayerName.Text = Player_.Name
+            PlayerButton.Friend.Visible = IsPlayerFriend
+
+            makeButton(PlayerButton, Player_)   
+    end))
+
+    playerListJanitor:Add(PlayerListPage.Main.Close.MouseButton1Click:connect(function ()
+        PlayerListPage["Self"].Visible = false
+        playerListJanitor:Cleanup()
+    end))
+
+    
+    PlayerListPage.Main.Scroll.CanvasSize = UDim2.new(0, 0, 0, PlayerListPage.Main.Scroll.UIGridLayout.AbsoluteContentSize.Y)
+    PlayerListPage["Self"].Visible = true
 end
 
 -- Room Claiming Functions
@@ -169,7 +253,8 @@ function RoomController:EnableCustomizationMenu()
     local CloseButton = CustomizeRoomPage.BG.Main.Close
 
     local LockButton = CustomizeRoomPage.BG.Main.Lock
-    
+    local BanPlayerButton = CustomizeRoomPage.BG.Main.Ban
+
     local RoomLocked = PlayerRoom:GetAttribute("Locked")
 
     if RoomLocked == true then
@@ -199,6 +284,12 @@ function RoomController:EnableCustomizationMenu()
         end)
     )
 
+    janitor:Add(
+        BanPlayerButton.MouseButton1Click:connect(function ()
+            self:OpenBanPage()
+        end)
+    )
+
     CustomizeRoomPage["Self"].Position = UDim2.new(0.5, 0, 0.8, 0)
     CustomizeRoomPage["Self"].Visible = true
     Tween(CustomizeRoomPage["Self"], {"Position"}, {UDim2.new(0.5, 0, 0.5, 0)})
@@ -221,6 +312,7 @@ end
 
 function RoomController:Close()
     janitor:Cleanup()
+    playerListJanitor:Cleanup()
 
     Camera.CameraType = Enum.CameraType.Custom
 
@@ -230,6 +322,8 @@ function RoomController:Close()
     
     ChangeRoomsPage["Self"].Visible = false
     CustomizeRoomPage["Self"].Visible = false
+    PlayerListPage["Self"].Visible = false
+
     UIController.UI_Open = nil
 end
 
@@ -260,6 +354,7 @@ function RoomController:Initialize(UI)
     ChangeRoomsPage = MainUI.Pages.Change_Rooms
     TeleportToRoomPage = MainUI.Pages.TeleportToRoom
     CustomizeRoomPage = MainUI.Pages.Customize_Room
+    PlayerListPage = MainUI.Pages.Player_List
 
     CustomizeRoomPage.Visible = false
     TeleportToRoomPage.Visible = false

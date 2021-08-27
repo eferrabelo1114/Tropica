@@ -91,6 +91,14 @@ local function loadColorFromTable(t)
 	return Color3.new(t.r, t.g, t.b)
 end
 
+local function stringToTable(string)
+    local output = {}
+    for entry in string.gmatch(string, "[^,]+") do
+        table.insert(output, entry)
+    end
+    return output
+end
+
 function AvatarService:TurnDescriptionIntoTable(description)
     local descTable = {}
 
@@ -175,7 +183,11 @@ function AvatarService:GetAccessoriesFromDesc(Desc)
 
     for _, PossibleAccesory in pairs(PossibleAccessories) do
         if Desc[PossibleAccesory.."Accessory"] and Desc[PossibleAccesory.."Accessory"] ~= "" then
-            table.insert(Accessories, Desc[PossibleAccesory.."Accessory"])
+            local newTable = stringToTable(Desc[PossibleAccesory.."Accessory"])
+
+            for _, v in pairs(newTable) do
+                table.insert(Accessories, tonumber(v))
+            end
         end
     end
 

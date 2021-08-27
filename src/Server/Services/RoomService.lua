@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 -- Private Variables
 local Knit = require(ReplicatedStorage.Knit)
@@ -44,7 +45,7 @@ function RoomService.Client:ClaimRoom(player, RoomID)
             local room = RoomService:FindRoomByID(RoomID)
 
             if room ~= nil then
-                if room.Self:GetAttribute("Claimed") == false then
+                if room.Self:GetAttribute("Claimed") == false then --Make sure the room isn't owned already
                     profile.TempData.RoomOwned = room
 
                     room.Claimed = true
@@ -102,6 +103,30 @@ function RoomService.Client:LockRoom(player, toggle)
     end
 end
 
+function RoomService.Client:BanUser(player, UserID)
+    if ProfileInterface.Profiles[player] then
+        local Profile = ProfileInterface.Profiles[player]
+        local PlayerExists = false
+
+        for _, _Player in pairs(game.Players:GetPlayers()) do
+            if _Player.UserId == UserID then
+                PlayerExists = true
+            end
+        end
+
+        if PlayerExists then
+            if table.find(Profile.Data.Roomsettings.BannedUsers, UserID) == nil then
+                table.insert(Profile.Data.Roomsettings.BannedUsers, UserID)
+                player:SetAttribute("BannedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.BannedUsers))
+            else --Unban User if they are already banned
+                local UserIndex = table.find(Profile.Data.Roomsettings.BannedUsers, UserID)
+                table.remove(Profile.Data.Roomsettings.BannedUsers, UserIndex)
+                player:SetAttribute("BannedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.BannedUsers))
+            end
+        end
+    end
+end
+
 
 function RoomService:KnitStart()
     ProfileInterface = Knit.GetService("ProfileInterface")
@@ -146,7 +171,7 @@ function RoomService:KnitStart()
             local roomOwner = room.Owner
 
             if roomOwner then
-                pcall(function() -- The player may leave mid call, so pcall this >_<
+                local success, error = pcall(function() -- The player may leave mid call, so pcall this >_<
                     local ownerProfile = ProfileInterface.Profiles[roomOwner]
 
                     if ownerProfile then
@@ -157,14 +182,16 @@ function RoomService:KnitStart()
                                 local PlayerInRoom = game.Players:GetPlayerFromCharacter(Part.Parent)
                                 local Char = PlayerInRoom.Character
     
-                                if room.Locked then
-                                    if PlayerInRoom ~= roomOwner then
-                                        
+                                if PlayerInRoom ~= roomOwner then
+                                    if room.Locked then
                                         if not table.find(ownerRoomSettings.AllowedUsers, PlayerInRoom) then
-                                            
                                             local newCFrame = CFrame.new((RoomPrimaryPart.CFrame * CFrame.new(0, 0 ,17)).Position)
                                             Char:SetPrimaryPartCFrame(newCFrame)
-    
+                                        end
+                                    elseif not room.Locked then
+                                        if table.find(ownerRoomSettings.BannedUsers, PlayerInRoom.UserId) then
+                                            local newCFrame = CFrame.new((RoomPrimaryPart.CFrame * CFrame.new(0, 0 ,17)).Position)
+                                            Char:SetPrimaryPartCFrame(newCFrame)
                                         end
                                     end
                                 end

@@ -317,6 +317,7 @@ function CharCustomization:LoadItemsFrame()
             end))
         end
 
+        
         MainCustomizationFrame.Main.Main.Editor.Colors.CanvasSize = UDim2.new(0, 0, 0, MainCustomizationFrame.Main.Main.Editor.Colors.UIGridLayout.AbsoluteContentSize.Y)
     end
 
