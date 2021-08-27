@@ -127,6 +127,30 @@ function RoomService.Client:BanUser(player, UserID)
     end
 end
 
+function RoomService.Client:WhitelistUser(player, UserID)
+    if ProfileInterface.Profiles[player] then
+        local Profile = ProfileInterface.Profiles[player]
+        local PlayerExists = false
+
+        for _, _Player in pairs(game.Players:GetPlayers()) do
+            if _Player.UserId == UserID then
+                PlayerExists = true
+            end
+        end
+
+        if PlayerExists then
+            if table.find(Profile.Data.Roomsettings.WhitelistedUsers, UserID) == nil then
+                table.insert(Profile.Data.Roomsettings.WhitelistedUsers, UserID)
+                player:SetAttribute("WhitelistedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.WhitelistedUsers))
+            else --Unban User if they are already banned
+                local UserIndex = table.find(Profile.Data.Roomsettings.WhitelistedUsers, UserID)
+                table.remove(Profile.Data.Roomsettings.WhitelistedUsers, UserIndex)
+                player:SetAttribute("WhitelistedUsers", HttpService:JSONEncode(Profile.Data.Roomsettings.WhitelistedUsers))
+            end
+        end
+    end
+end
+
 
 function RoomService:KnitStart()
     ProfileInterface = Knit.GetService("ProfileInterface")
@@ -184,7 +208,7 @@ function RoomService:KnitStart()
     
                                 if PlayerInRoom ~= roomOwner then
                                     if room.Locked then
-                                        if not table.find(ownerRoomSettings.AllowedUsers, PlayerInRoom) then
+                                        if not table.find(ownerRoomSettings.WhitelistedUsers, PlayerInRoom.UserId) then
                                             local newCFrame = CFrame.new((RoomPrimaryPart.CFrame * CFrame.new(0, 0 ,17)).Position)
                                             Char:SetPrimaryPartCFrame(newCFrame)
                                         end
