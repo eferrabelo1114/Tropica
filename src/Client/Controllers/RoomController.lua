@@ -24,10 +24,13 @@ local ChangeRoomsPage;
 local TeleportToRoomPage;
 local CustomizeRoomPage;
 local PlayerListPage;
+local ColorsPage;
+
 
 local janitor = Janitor.new()
 local teleportPageJanitor = Janitor.new()
 local playerListJanitor = Janitor.new()
+local colorsJanitor = Janitor.new()
 
 local Camera = workspace.CurrentCamera
 
@@ -59,6 +62,19 @@ function RoomController:FindRoomByID(RoomID)
 
     return nil
 end
+
+-- Room Colors
+function RoomController:OpenColorPage(objectChangingColor)
+    colorsJanitor:Cleanup()
+
+    
+
+
+
+
+
+end
+
 
 -- Room Banning Stuff
 function RoomController:OpenBanPage()
@@ -401,6 +417,7 @@ function RoomController:Close()
     playerListJanitor:Cleanup()
 
     Camera.CameraType = Enum.CameraType.Custom
+    Camera.CameraSubject = player.Character
 
     UIController:ToggleShowHotbar(false)
     UIController:ToggleShowSidebuttons(false)
@@ -441,6 +458,7 @@ function RoomController:Initialize(UI)
     TeleportToRoomPage = MainUI.Pages.TeleportToRoom
     CustomizeRoomPage = MainUI.Pages.Customize_Room
     PlayerListPage = MainUI.Pages.Player_List
+    ColorsPage = MainUI.Pages.Colors
 
     CustomizeRoomPage.Visible = false
     TeleportToRoomPage.Visible = false
