@@ -98,14 +98,18 @@ function UIController:EnableSidebuttons()
                 -- Click handling
                 janitor:Add(
                     button.MouseButton1Click:connect(function()
-                        if self.UI_Open then
-                            frameControllers[self.UI_Open]:Close()
-                            self.UI_Open = nil
-                        end
+                        if player.Character then
+                            if player.Character.Humanoid.Health > 0 then
+                                if self.UI_Open then
+                                    frameControllers[self.UI_Open]:Close()
+                                    self.UI_Open = nil
+                                end
 
-                        if frameControllers[button.Name] then
-                            frameControllers[button.Name]:Open()
-                            self.UI_Open = button.Name
+                                if frameControllers[button.Name] then
+                                    frameControllers[button.Name]:Open()
+                                    self.UI_Open = button.Name
+                                end
+                            end
                         end
                     end)
                 )
