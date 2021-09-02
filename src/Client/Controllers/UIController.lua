@@ -226,42 +226,12 @@ function UIController:Initialize()
     InputType  = ClientInput.InputType
     InputFunctions = ClientInput.InputFunctions
 
-    local main = mainUI:Clone()
-
     -- Load Frame Controllers
     frameControllers = {
         ["Nametag"] = NametagController;
         ["Customization"] = CharacterCustomizeController;
         ["RoomSelection"] = RoomController;
     }
-
-    -- Turn off all pages
-    for _, page in pairs(main.Pages:GetChildren()) do
-        page.Visible = false
-    end
-
-    -- Load all UI into a table
-    for uiType, _ in pairs(self.UI_Table) do
-        if main:FindFirstChild(uiType) then
-            for _, Frame in pairs(main:FindFirstChild(uiType):GetChildren()) do
-                if Frame:IsA("Frame") or Frame:IsA("ImageButton") or Frame:IsA("ImageLabel") then
-                    UIController.UI_Table[uiType][Frame.Name] = {}
-                    
-                    if Frame.Name ~= "Hotbar" then
-                        for _, child in pairs(Frame:GetChildren()) do
-                            UIController.UI_Table[uiType][Frame.Name][child.Name] = child
-                        end
-                    else
-                        for _, child in pairs(Frame:GetChildren()) do
-                            UIController.UI_Table[uiType][Frame.Name][child] = child
-                        end
-                    end
-
-                    UIController.UI_Table[uiType][Frame.Name]["Self"] = Frame
-                end
-            end
-        end
-    end
 
     -- Initialize all UI elements with new UI table
     NametagController:Initialize(self.UI_Table)
@@ -291,9 +261,50 @@ function UIController:Initialize()
     self:StartTime()
     self:EnableHotbar()
     self:EnableSidebuttons()
+end
+
+-- Load UI
+function UIController:LoadUI()
+    local main = mainUI:Clone()
+
+    -- Turn off all pages
+    for _, page in pairs(main.Pages:GetChildren()) do
+        page.Visible = false
+    end
+
+    -- Position all HUD aspects for after-loading animations
+    for _, HudElement in pairs(main.HUD:GetChildren()) do
+        if HudElement.Name == "Buttons" then
+            HudElement.Position = UDim2.new(1.2, 0, 0.55, 0)
+        end
+    end
+
+    -- Load all UI into a table
+    for uiType, _ in pairs(self.UI_Table) do
+        if main:FindFirstChild(uiType) then
+            for _, Frame in pairs(main:FindFirstChild(uiType):GetChildren()) do
+                if Frame:IsA("Frame") or Frame:IsA("ImageButton") or Frame:IsA("ImageLabel") then
+                    UIController.UI_Table[uiType][Frame.Name] = {}
+                    
+                    if Frame.Name ~= "Hotbar" then
+                        for _, child in pairs(Frame:GetChildren()) do
+                            UIController.UI_Table[uiType][Frame.Name][child.Name] = child
+                        end
+                    else
+                        for _, child in pairs(Frame:GetChildren()) do
+                            UIController.UI_Table[uiType][Frame.Name][child] = child
+                        end
+                    end
+
+                    UIController.UI_Table[uiType][Frame.Name]["Self"] = Frame
+                end
+            end
+        end
+    end
 
     main.Parent = playerGui
 end
+
 
 -- Loading Stuff
 function UIController:LoadGame()
@@ -310,6 +321,10 @@ end
 function UIController:KnitStart()
     local ProfileService = Knit.GetService("ProfileInterface")
     local profileLoadedJanitor = Janitor.new()
+
+    
+
+
     spawn(function ()
         self:LoadGame()
     end)
